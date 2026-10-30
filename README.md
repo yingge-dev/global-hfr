@@ -135,6 +135,8 @@ WebUI → 设置 → 恢复系统默认；或在管理器卸载模块并重启�
 │   ├── app.js
 │   └── assets/             # 截图与下载包
 ├── .github/workflows/      # 打 tag 自动发 Release
+├── RELEASE.md              # 发版流程
+├── release.ps1             # 一键发版脚本
 └── update.json             # 自动生成，无需手改
 ```
 
@@ -148,6 +150,8 @@ zip -r ../global-hfr.zip .
 ---
 
 ## 发版（自动）
+
+详细步骤见 [RELEASE.md](RELEASE.md)，也可以直接运行 .elease.ps1 v1.2.3。
 
 1. 修改 `module/module.prop` 的 `version` 与 `versionCode`；
 2. 提交并推送 `main`；
