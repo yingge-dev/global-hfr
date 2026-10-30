@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <a href="docs/assets/%E7%9C%9F%C2%B7%E5%85%A8%E5%B1%80%E9%AB%98%E5%88%B7.zip"><b>⬇ 下载模块</b></a>
+  <a href="docs/assets/global-hfr.zip"><b>⬇ 下载模块</b></a>
   &nbsp;·&nbsp;
   <a href="https://yingge-dev.github.io/global-hfr/">项目主页</a>
   &nbsp;·&nbsp;
@@ -73,7 +73,7 @@
 
 ## 安装
 
-1. 下载 [`global-hfr.zip`](docs/assets/%E7%9C%9F%C2%B7%E5%85%A8%E5%B1%80%E9%AB%98%E5%88%B7.zip)；
+1. 下载 [`global-hfr.zip`](docs/assets/global-hfr.zip)；
 2. 在 **Magisk / KernelSU / APatch** 管理器中选择「从本地安装」；
 3. 重启手机；
 4. 打开 WebUI 调整档位 / 动态区间 / 触控。
@@ -85,7 +85,7 @@
 
 > 不要与其他「高刷 / 刷新率 / LTPO / VRR / dfps / Astra」类模块同时启用，会互相抢显示策略。
 
-> 主页下载按钮给的是中文文件名 `真·全局高刷.zip`；管理器自动更新使用 ASCII 的 `global-hfr.zip`，避免 URL 编码兼容问题。
+> GitHub Release 与自动更新使用 ASCII 的 `global-hfr.zip`（兼容性最好）；主页下载按钮通过 `download` 属性保存为 `真·全局高刷.zip`。
 
 ---
 
@@ -135,9 +135,7 @@ WebUI → 设置 → 恢复系统默认；或在管理器卸载模块并重启�
 │   ├── app.js
 │   └── assets/             # 截图与下载包
 ├── .github/workflows/      # 打 tag 自动发 Release
-├── update.json             # 自动生成，无需手改
-├── profile-README.md       # GitHub 个人主页模板
-└── PUSH.md                 # 上传与发布步骤
+└── update.json             # 自动生成，无需手改
 ```
 
 ## 本地打包
@@ -146,8 +144,6 @@ WebUI → 设置 → 恢复系统默认；或在管理器卸载模块并重启�
 cd module
 zip -r ../global-hfr.zip .
 ```
-
-
 
 ---
 
@@ -162,7 +158,7 @@ git tag v1.2.2
 git push origin v1.2.2
 ```
 
-GitHub Actions 会自动打包、创建 Release、更新 `update.json` 和 `docs/assets/%E7%9C%9F%C2%B7%E5%85%A8%E5%B1%80%E9%AB%98%E5%88%B7.zip`，并触发 Pages 构建。之后已安装的旧版本会按 `versionCode` 检查更新。
+GitHub Actions 会自动打包、创建 Release、更新 `update.json` 和 `docs/assets/global-hfr.zip`，并触发 Pages 构建。之后已安装的旧版本会按 `versionCode` 检查更新。
 
 ## 作者
 

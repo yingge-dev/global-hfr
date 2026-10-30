@@ -65,9 +65,8 @@ jobs:
           git pull --rebase origin main
           cp "$RUNNER_TEMP/update.json" update.json
           cp "$RUNNER_TEMP/pages.zip" docs/assets/global-hfr.zip
-          cp "$RUNNER_TEMP/pages.zip" "docs/assets/真·全局高刷.zip"
 
-          git add update.json docs/assets/global-hfr.zip "docs/assets/真·全局高刷.zip"
+          git add update.json docs/assets/global-hfr.zip
           if git diff --cached --quiet; then
             echo "manifest 无变化，跳过提交"
           else
