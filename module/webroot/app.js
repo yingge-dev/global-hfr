@@ -95,10 +95,11 @@
     },
     config: {
       profile: 'fixed', fixed_hz: 165, dyn_min: 60, dyn_max: 165,
-      touch: 1, touch_level: 'standard', deep_lock: 1, overlay: 0,
+      touch: 1, touch_level: 'standard', sampling: 480, deep_lock: 1, overlay: 0,
       daemon: 1, auto_boot: 1, oplus_props: 0
     },
     live: { current: 165, target: 165, verified: 1, method: 'SurfaceFlinger · mode 5', updated: Math.floor(Date.now() / 1000) },
+    sampling: { value: 480, exists: 1, applied: 1, path: '/sys/class/touch/touch_dev/touch_thp_ic_cmd' },
     touch: {
       enabled: 1, level: 'standard', applied: 3,
       nodes: [
@@ -389,6 +390,10 @@
     var lvl = c.touch_level || 'standard';
     var nodes = t.nodes || [];
     var applied = Number(t.applied) || 0;
+    var sp = (state && state.sampling) || {};
+    var rate = Number(c.sampling) || 0;
+    var nodeExists = Number(sp.exists) === 1;
+    var rateApplied = Number(sp.applied) === 1;
 
     $('#touchSwitch').checked = on;
     $('#touchSwitch2').checked = on;
@@ -396,20 +401,37 @@
       b.classList.toggle('on', b.getAttribute('data-level') === lvl);
     });
 
+    var extra = rate > 0 ? (' · 采样 ' + rate + 'Hz') : '';
     $('#touchSummary').textContent = on ?
-      ('已启用 · ' + applied + ' 项生效 · ' + (lvl === 'esports' ? '电竞' : '标准')) :
+      ('已启用 · ' + applied + ' 项生效 · ' + (lvl === 'esports' ? '电竞' : '标准') + extra) :
       '已关闭 · 未写入内核节点';
     $('#touchHeroState').textContent = on ?
-      ('运行中 · ' + (lvl === 'esports' ? '电竞模式（高耗电）' : '标准模式')) : '已关闭';
+      ('运行中 · ' + (lvl === 'esports' ? '电竞模式（高耗电）' : '标准模式') + extra) : '已关闭';
+
+    $$('#samplingSeg button').forEach(function (b) {
+      var r = Number(b.getAttribute('data-rate')) || 0;
+      b.classList.toggle('on', r === rate);
+      b.disabled = (r > 0 && !nodeExists);
+    });
+    if (!nodeExists) {
+      $('#samplingState').textContent = '未检测到节点';
+      $('#samplingHint').innerHTML = '当前机型没有暴露 <code>touch_thp_ic_cmd</code>。这类机型的采样率由厂商 HAL / 游戏助手控制，通用模块无法绕过。';
+    } else if (rate > 0) {
+      $('#samplingState').textContent = rateApplied ? ('已写入 ' + rate + 'Hz') : ('已设置 ' + rate + 'Hz');
+      $('#samplingHint').innerHTML = '已检测到 Xiaomi thp 节点，写入后无需游戏助手；切换后滑动测试。480Hz 会更耗电。';
+    } else {
+      $('#samplingState').textContent = '未启用';
+      $('#samplingHint').innerHTML = '打开后可全局提高触控报点率，不依赖游戏助手加白名单；只对暴露 thp 节点的机型有效。';
+    }
 
     var body = nodes.map(function (n) {
       var cls = n.exists ? (n.ok ? 'ok' : '') : 'miss';
-      var state = n.exists ? (n.ok ? '已生效' : '未生效') : '未检测到';
+      var stateText = n.exists ? (n.ok ? '已生效' : '未生效') : '未检测到';
       return '<li>' +
         '<span class="n-dot ' + cls + '"></span>' +
         '<div class="n-body"><div class="n-name">' + esc(touchLabel(n.name)) + '</div>' +
         '<div class="n-path">' + esc(n.path) + '</div></div>' +
-        '<span class="n-state ' + (n.ok ? 'ok' : '') + '">' + state + '</span>' +
+        '<span class="n-state ' + (n.ok ? 'ok' : '') + '">' + stateText + '</span>' +
         '</li>';
     }).join('');
     $('#nodes').innerHTML = body || '<li><span class="n-dot miss"></span><div class="n-body"><div class="n-name">未检测到可写节点</div><div class="n-path">当前内核未暴露常用触控 boost 接口</div></div></li>';
@@ -535,6 +557,63 @@
     }
   }
 
+  function optimisticSwitch(kind, value) {
+    if (!state) return;
+    var cfg = state.config || (state.config = {});
+    var live = state.live || (state.live = {});
+    if (kind === 'fixed') {
+      var hz = Number(value) || 0;
+      var max = Number((state.panel || {}).max) || 0;
+      cfg.profile = 'fixed';
+      cfg.fixed_hz = hz;
+      live.target = hz || max;
+      live.current = live.target;
+      live.verified = 0;
+      live.method = '切换中…';
+    } else if (kind === 'dynamic') {
+      cfg.profile = 'dynamic';
+      cfg.dyn_min = Number(value.lo);
+      cfg.dyn_max = Number(value.hi);
+      live.target = Number(value.hi);
+      live.current = live.target;
+      live.verified = 0;
+      live.method = '切换中…';
+    } else if (kind === 'off') {
+      cfg.profile = 'off';
+      live.target = 0;
+      live.verified = 0;
+      live.method = '切换中…';
+    } else if (kind === 'touch') {
+      cfg.touch = Number(value);
+    } else if (kind === 'level') {
+      cfg.touch_level = value;
+      cfg.touch = 1;
+    } else if (kind === 'sampling') {
+      cfg.sampling = Number(value);
+      if (state.sampling) state.sampling.applied = 0;
+    }
+    render();
+  }
+
+  async function applySwitch(args, okMsg, kind, value) {
+    if (guard()) return;
+    if (kind) optimisticSwitch(kind, value);
+    setBusy(true);
+    try {
+      var r = await run('switch ' + args);
+      if (!r.json || !r.json.ok) {
+        toast('切换失败，请查看日志', 'err');
+        await refresh({ silent: true });
+        return;
+      }
+      await refresh({ silent: true });
+      var tail = r.json.verified ? ' · 已核验' : ' · 待核验';
+      toast(okMsg + tail, r.json.verified ? 'ok' : '');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   /* ---------------- 交互绑定 ---------------- */
   function bind() {
     ['pointerdown', 'change'].forEach(function (evt) {
@@ -547,14 +626,14 @@
       if (!btn) return;
       var kind = btn.getAttribute('data-preset');
       if (kind === 'max') {
-        applyPairs([['profile', 'fixed'], ['fixed_hz', '0']], '已切换为全局最高');
+        applySwitch('fixed 0', '已切换为全局最高', 'fixed', 0);
       } else if (kind === 'off') {
-        applyPairs([['profile', 'off']], '已交还系统调度');
+        applySwitch('off', '已交还系统调度', 'off');
       } else {
         var lo = $('#dynMin').value;
         var hi = $('#dynMax').value;
         if (Number(hi) <= Number(lo)) { toast('上限需大于下限', 'err'); return; }
-        applyPairs([['profile', 'dynamic'], ['dyn_min', lo], ['dyn_max', hi]], '动态区间已应用');
+        applySwitch('dynamic ' + lo + ' ' + hi, '动态区间已应用', 'dynamic', { lo: lo, hi: hi });
       }
     });
 
@@ -566,7 +645,8 @@
         toast(hz + 'Hz 档位未检测到，需要机型或超频 DTBO 支持', 'err');
         return;
       }
-      applyPairs([['profile', 'fixed'], ['fixed_hz', hz]], '已锁定 ' + hz + 'Hz');
+      if (btn.classList.contains('on')) { toast('已经是 ' + hz + 'Hz'); return; }
+      applySwitch('fixed ' + hz, '已锁定 ' + hz + 'Hz', 'fixed', hz);
     });
 
     $('#dynMin').addEventListener('change', syncDynBar);
@@ -580,28 +660,35 @@
       $('#dynMin').value = lo;
       $('#dynMax').value = hi;
       syncDynBar();
-      applyPairs([['profile', 'dynamic'], ['dyn_min', lo], ['dyn_max', hi]], '动态区间已应用');
+      applySwitch('dynamic ' + lo + ' ' + hi, '动态区间已应用', 'dynamic', { lo: lo, hi: hi });
     });
 
     $('#btnApplyDyn').addEventListener('click', function () {
       var lo = $('#dynMin').value;
       var hi = $('#dynMax').value;
       if (Number(hi) <= Number(lo)) { toast('上限需大于下限', 'err'); return; }
-      applyPairs([['profile', 'dynamic'], ['dyn_min', lo], ['dyn_max', hi]], '动态区间已应用');
+      applySwitch('dynamic ' + lo + ' ' + hi, '动态区间已应用', 'dynamic', { lo: lo, hi: hi });
     });
 
     ['touchSwitch', 'touchSwitch2'].forEach(function (id) {
       $('#' + id).addEventListener('change', function () {
         var on = this.checked;
-        applyPairs([['touch', on ? '1' : '0']], on ? '触控加速已开启' : '触控加速已关闭');
+        applySwitch('touch ' + (on ? '1' : '0'), on ? '触控加速已开启' : '触控加速已关闭', 'touch', on ? 1 : 0);
       });
     });
 
     $$('#touchLevelSeg button, #touchLevelSeg2 button').forEach(function (b) {
       b.addEventListener('click', function () {
         var lvl = b.getAttribute('data-level');
-        applyPairs([['touch_level', lvl], ['touch', '1']], lvl === 'esports' ? '已切换电竞触控' : '已切换标准触控');
+        applySwitch('touch 1 ' + lvl, lvl === 'esports' ? '已切换电竞触控' : '已切换标准触控', 'level', lvl);
       });
+    });
+
+    $('#samplingSeg').addEventListener('click', function (e) {
+      var b = e.target.closest('button');
+      if (!b || b.disabled) return;
+      var rate = Number(b.getAttribute('data-rate')) || 0;
+      applySwitch('sampling ' + rate, rate ? ('采样率已设为 ' + rate + 'Hz') : '采样率已恢复', 'sampling', rate);
     });
 
     $('#swDeep').addEventListener('change', function () {

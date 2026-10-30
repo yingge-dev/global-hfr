@@ -89,11 +89,17 @@ overlay=0
 daemon=1
 auto_boot=1
 oplus_props=0
+sampling=0
+
+last_verified_hz=""
+measured_hz=""
+sampling_applied=0
+sampling_method=""
 
 load_conf() {
     profile=fixed; fixed_hz=0; dyn_min=60; dyn_max=0
     touch=1; touch_level=standard; deep_lock=1; overlay=0
-    daemon=1; auto_boot=1; oplus_props=0
+    daemon=1; auto_boot=1; oplus_props=0; sampling=0
     [ -f "$CONF" ] || return 0
     while IFS='=' read -r k v; do
         v=$(printf '%s' "$v" | tr -d ' \t\r')
@@ -109,6 +115,7 @@ load_conf() {
             daemon) case "$v" in 0|1) daemon=$v ;; esac ;;
             auto_boot) case "$v" in 0|1) auto_boot=$v ;; esac ;;
             oplus_props) case "$v" in 0|1) oplus_props=$v ;; esac ;;
+            sampling) case "$v" in 0|120|240|360|480) sampling=$v ;; esac ;;
         esac
     done < "$CONF"
 }
@@ -130,6 +137,7 @@ set_conf() {
         profile) case "$v" in fixed|dynamic|off) ;; *) return 2 ;; esac ;;
         fixed_hz|dyn_min|dyn_max) is_num "$v" || return 2 ;;
         touch|deep_lock|overlay|daemon|auto_boot|oplus_props) case "$v" in 0|1) ;; *) return 2 ;; esac ;;
+        sampling) case "$v" in 0|120|240|360|480) ;; *) return 2 ;; esac ;;
         touch_level) case "$v" in standard|esports) ;; *) return 2 ;; esac ;;
         *) return 2 ;;
     esac
@@ -383,18 +391,26 @@ active_mode_id() {
 }
 
 verify_target() {
-    want=$1; mid=$2; i=0
-    while [ "$i" -lt 7 ]; do
-        if [ -n "$mid" ]; then
-            am=$(active_mode_id)
-            [ "$am" = "$mid" ] && return 0
-        fi
+    want=$1; mid=$2
+    last_verified_hz=""
+    sleep 0.2
+    c=$(current_hz)
+    if [ -n "$c" ]; then
+        d=$((c - want)); [ "$d" -lt 0 ] && d=$((-d))
+        [ "$d" -le 2 ] && { last_verified_hz=$c; return 0; }
+    fi
+    if [ -n "$mid" ]; then
+        am=$(active_mode_id)
+        [ "$am" = "$mid" ] && { last_verified_hz=$want; return 0; }
+    fi
+    i=0
+    while [ "$i" -lt 3 ]; do
+        sleep 0.3
         c=$(current_hz)
         if [ -n "$c" ]; then
             d=$((c - want)); [ "$d" -lt 0 ] && d=$((-d))
-            [ "$d" -le 2 ] && return 0
+            [ "$d" -le 2 ] && { last_verified_hz=$c; return 0; }
         fi
-        sleep 0.4
         i=$((i + 1))
     done
     return 1
@@ -404,6 +420,8 @@ apply_display() {
     method=""
     verified=0
     target_hz=0
+    measured_hz=""
+    last_verified_hz=""
     case "$profile" in
         off)
             clear_backdoor
@@ -463,6 +481,9 @@ apply_display() {
                     method="DisplayManager · mode $mid"
                 fi
             fi
+            if [ "$verified" = 1 ]; then
+                measured_hz=${last_verified_hz:-$mhz}
+            fi
             if [ "$verified" = 0 ]; then
                 [ -n "$method" ] || method="Settings"
                 method="$method · 未确认"
@@ -483,6 +504,59 @@ adreno_idler|/sys/module/adreno_idler/parameters/adreno_idler_active|0|1
 mtk_fpsgo|/sys/kernel/fpsgo/common/force_onoff|1|0
 x_gpu_gov|/sys/class/kgsl/kgsl-3d0/devfreq/governor|performance|
 x_sched_boost|/proc/sys/kernel/sched_boost|1|0"
+
+SAMPLINGBAK=$DATA/sampling.backup
+SAMPLING_NODES="/sys/class/touch/touch_dev/touch_thp_ic_cmd /sys/class/touch/touch_dev/touch_ic_cmd"
+
+sampling_node() {
+    for p in $SAMPLING_NODES; do
+        [ -e "$p" ] && { echo "$p"; return 0; }
+    done
+    return 1
+}
+
+apply_sampling() {
+    sampling_applied=0
+    sampling_method=""
+    case "$sampling" in
+        0|'') return 0 ;;
+    esac
+    node=$(sampling_node)
+    [ -n "$node" ] || return 1
+
+    if [ ! -f "$SAMPLINGBAK" ]; then
+        v=$(cat "$node" 2>/dev/null | tr -d '\r\n')
+        printf '%s\t%s\n' "$node" "$v" > "$SAMPLINGBAK" 2>/dev/null
+    fi
+
+    # Xiaomi thp 协议：8 3007 <rate> 1（不能带换行）
+    if printf '%s' "8 3007 $sampling 1" > "$node" 2>/dev/null; then
+        sampling_applied=1
+        sampling_method="thp $sampling"
+        log "触控采样率写入 ${sampling}Hz -> $node"
+        return 0
+    fi
+    log "触控采样率写入失败 -> $node"
+    return 1
+}
+
+restore_sampling() {
+    node=$(sampling_node)
+    if [ -f "$SAMPLINGBAK" ]; then
+        while IFS=$TAB read -r p v; do
+            [ -n "$p" ] || continue
+            if [ -n "$v" ]; then
+                printf '%s' "$v" > "$p" 2>/dev/null
+            elif [ -n "$node" ]; then
+                printf '%s' "8 3007 120 1" > "$node" 2>/dev/null
+            fi
+            break
+        done < "$SAMPLINGBAK"
+        rm -f "$SAMPLINGBAK"
+    fi
+    sampling_applied=0
+    sampling_method=""
+}
 
 backup_touch_node() {
     p=$1
@@ -516,6 +590,7 @@ renice_touch() {
 }
 
 restore_touch() {
+    restore_sampling
     if [ -f "$TOUCHBAK" ]; then
         while IFS=$TAB read -r p v; do
             [ -n "$p" ] || continue
@@ -564,14 +639,17 @@ EOF
         printf 'renice|touch HAL|1|%s\n' "$prio" >> "$TOUCHSTATE"
         touch_applied=$((touch_applied + 1))
     fi
-    log "触控增强 level=$touch_level 生效节点=$touch_applied renice=$n"
+    apply_sampling
+    [ "$sampling_applied" = 1 ] && touch_applied=$((touch_applied + 1))
+    log "触控增强 level=$touch_level 生效节点=$touch_applied renice=$n sampling=$sampling"
 }
 
 # ------------------------------------------------------------
 #  状态
 # ------------------------------------------------------------
 write_state() {
-    cur=$(current_hz)
+    cur=$1
+    [ -n "$cur" ] || cur=$(current_hz)
     [ -n "$cur" ] || cur=0
     {
         echo "ts=$(now)"
@@ -581,6 +659,8 @@ write_state() {
         echo "verified=$verified"
         echo "method=$method"
         echo "touch_applied=$touch_applied"
+        echo "sampling_applied=$sampling_applied"
+        echo "sampling_method=$sampling_method"
     } > "$STATE.tmp" 2>/dev/null && mv -f "$STATE.tmp" "$STATE" 2>/dev/null
 }
 
@@ -593,8 +673,8 @@ apply_all() {
     else
         service call SurfaceFlinger 1034 i32 0 >/dev/null 2>&1
     fi
-    write_state
-    log "应用完成 profile=$profile target=$target_hz verified=$verified method=$method touch=$touch/$touch_applied"
+    write_state "$measured_hz"
+    log "应用完成 profile=$profile target=$target_hz verified=$verified method=$method touch=$touch/$touch_applied sampling=$sampling"
 }
 
 restore_all() {
@@ -644,10 +724,12 @@ json_status() {
     st_method=$(sed -n 's/^method=//p' "$STATE" 2>/dev/null | head -n 1)
     st_ts=$(sed -n 's/^ts=//p' "$STATE" 2>/dev/null | head -n 1)
     st_touch=$(sed -n 's/^touch_applied=//p' "$STATE" 2>/dev/null | head -n 1)
+    st_sampling=$(sed -n 's/^sampling_applied=//p' "$STATE" 2>/dev/null | head -n 1)
     is_num "$st_target" || st_target=0
     is_num "$st_ver" || st_ver=0
     is_num "$st_ts" || st_ts=0
     is_num "$st_touch" || st_touch=0
+    is_num "$st_sampling" || st_sampling=0
     if ! is_num "$st_cur"; then st_cur=$st_target; fi
     if [ -n "$cur" ]; then st_cur=$cur; fi
 
@@ -678,11 +760,16 @@ json_status() {
     fi
     printf ']},'
 
-    printf '"config":{"profile":"%s","fixed_hz":%s,"dyn_min":%s,"dyn_max":%s,"touch":%s,"touch_level":"%s","deep_lock":%s,"overlay":%s,"daemon":%s,"auto_boot":%s,"oplus_props":%s},' \
-        "$profile" "$fixed_hz" "$dyn_min" "$dyn_max" "$touch" "$touch_level" "$deep_lock" "$overlay" "$daemon" "$auto_boot" "$oplus_props"
+    printf '"config":{"profile":"%s","fixed_hz":%s,"dyn_min":%s,"dyn_max":%s,"touch":%s,"touch_level":"%s","sampling":%s,"deep_lock":%s,"overlay":%s,"daemon":%s,"auto_boot":%s,"oplus_props":%s},' \
+        "$profile" "$fixed_hz" "$dyn_min" "$dyn_max" "$touch" "$touch_level" "$sampling" "$deep_lock" "$overlay" "$daemon" "$auto_boot" "$oplus_props"
 
     printf '"live":{"current":%s,"target":%s,"verified":%s,"method":"%s","updated":%s},' \
         "$st_cur" "$st_target" "$st_ver" "$(jesc "$st_method")" "$st_ts"
+
+    sampling_node_path=$(sampling_node)
+    sampling_exists=0
+    [ -n "$sampling_node_path" ] && sampling_exists=1
+    printf '"sampling":{"value":%s,"exists":%s,"applied":%s,"path":"%s"},' "$sampling" "$sampling_exists" "$st_sampling" "$(jesc "$sampling_node_path")"
 
     printf '"touch":{"enabled":%s,"level":"%s","applied":%s,"nodes":[' "$touch" "$touch_level" "$st_touch"
     touch_json
@@ -690,10 +777,14 @@ json_status() {
 }
 
 apply_json() {
-    cur=$(current_hz)
+    if [ -n "$measured_hz" ]; then
+        cur=$measured_hz
+    else
+        cur=$(current_hz)
+    fi
     [ -n "$cur" ] || cur=0
-    printf '{"ok":1,"profile":"%s","target":%s,"current":%s,"verified":%s,"method":"%s","touch_applied":%s}\n' \
-        "$profile" "${target_hz:-0}" "$cur" "${verified:-0}" "$(jesc "$method")" "${touch_applied:-0}"
+    printf '{"ok":1,"profile":"%s","target":%s,"current":%s,"verified":%s,"method":"%s","touch_applied":%s,"sampling":%s,"sampling_applied":%s}\n' \
+        "$profile" "${target_hz:-0}" "$cur" "${verified:-0}" "$(jesc "$method")" "${touch_applied:-0}" "$sampling" "$sampling_applied"
 }
 
 cmd_brief() {
@@ -809,6 +900,35 @@ case "$cmd" in
         fi
         ;;
     apply)
+        apply_all
+        apply_json
+        ;;
+    switch)
+        case "$2" in
+            fixed)
+                is_num "$3" || { printf '{"ok":0}\n'; exit 2; }
+                set_conf profile fixed
+                set_conf fixed_hz "$3"
+                ;;
+            dynamic)
+                is_num "$3" && is_num "$4" || { printf '{"ok":0}\n'; exit 2; }
+                set_conf profile dynamic
+                set_conf dyn_min "$3"
+                set_conf dyn_max "$4"
+                ;;
+            off) set_conf profile off ;;
+            sampling)
+                case "$3" in 0|120|240|360|480) ;; *) printf '{"ok":0}\n'; exit 2 ;; esac
+                set_conf sampling "$3"
+                ;;
+            touch)
+                case "$3" in 0|1) ;; *) printf '{"ok":0}\n'; exit 2 ;; esac
+                set_conf touch "$3"
+                [ -n "$4" ] && set_conf touch_level "$4"
+                ;;
+            *) printf '{"ok":0}\n'; exit 2 ;;
+        esac
+        load_conf
         apply_all
         apply_json
         ;;

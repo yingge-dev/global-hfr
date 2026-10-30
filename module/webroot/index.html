@@ -179,6 +179,20 @@
 
     <section class="block">
       <div class="block-h">
+        <h2>全局触控采样率</h2>
+        <span id="samplingState">检测中</span>
+      </div>
+      <div class="seg wide" id="samplingSeg">
+        <button type="button" data-rate="0">关闭</button>
+        <button type="button" data-rate="240">240</button>
+        <button type="button" data-rate="360">360</button>
+        <button type="button" data-rate="480">480</button>
+      </div>
+      <p class="fine" id="samplingHint">正在检测触控采样节点…</p>
+    </section>
+
+    <section class="block">
+      <div class="block-h">
         <h2>生效节点</h2>
         <span id="touchCount">--</span>
       </div>
