@@ -2,7 +2,7 @@
 
 ## 0. 先替换占位符
 
-把下面文件里的 `YOUR_GITHUB_NAME` 全部替换成你的 GitHub 用户名（例如 `yingge`）：
+把下面文件里的 `wy15623505520-droid` 全部替换成你的 GitHub 用户名（例如 `yingge`）：
 
 - `README.md`
 - `update.json`
@@ -29,7 +29,7 @@ git init
 git add .
 git commit -m "feat: 真·全局高刷 v1.2.0"
 git branch -M main
-git remote add origin https://github.com/YOUR_GITHUB_NAME/global-hfr.git
+git remote add origin https://github.com/wy15623505520-droid/global-hfr.git
 git push -u origin main
 ```
 
@@ -51,40 +51,55 @@ gh repo create global-hfr --public --source=. --remote=origin --push
 等 1–2 分钟，访问：
 
 ```text
-https://YOUR_GITHUB_NAME.github.io/global-hfr/
+https://wy15623505520-droid.github.io/global-hfr/
 ```
 
 `docs/.nojekyll` 已放好，避免 Jekyll 处理静态资源。
 
-## 4. 发 Release（可选，但建议）
+## 4. 发版（自动，推荐）
 
-推送 tag 会自动触发 `.github/workflows/release.yml`，打包并上传 `global-hfr.zip`：
-
-```bash
-git tag v1.2.0
-git push origin v1.2.0
-```
-
-也可以手动：Releases → Draft a new release → 选 tag `v1.2.0` → 上传 `docs/assets/global-hfr.zip`（可改名为 `global-hfr.zip`）。
-
-Release 发好后，`update.json` 里的地址就能用了。
-
-## 5. 让 Magisk 支持自动更新（可选）
-
-在 `module/module.prop` 末尾加一行（把用户名换成你的）：
+只需要改 `module/module.prop`：
 
 ```ini
-updateJson=https://raw.githubusercontent.com/YOUR_GITHUB_NAME/global-hfr/main/update.json
+version=v1.2.1
+versionCode=10201
 ```
 
-然后重新打包 zip、重新发 Release。不加也不影响模块使用，只是管理器不会提示更新。
+提交后打 tag，**tag 必须和 version 完全一致**：
+
+```bash
+git add .
+git commit -m "release: v1.2.1"
+git push
+git tag v1.2.1
+git push origin v1.2.1
+```
+
+推送 tag 后，`.github/workflows/release.yml` 会自动：
+
+1. 校验 tag 与 `module.prop` 的 `version` 是否一致；
+2. 打包出 `global-hfr.zip`；
+3. 创建 GitHub Release 并上传 zip；
+4. 用 `module.prop` 里的版本号生成 `update.json`；
+5. 把 `update.json` 和最新的 `docs/assets/global-hfr.zip` 提交回 `main`；
+6. 触发一次 Pages 构建。
+
+**不需要再手改 `update.json`**，也不用手动上传 zip。`updateJson` 已经在 `module.prop` 里配好。
+
+## 5. 更新检查怎么生效
+
+管理器会拿已安装模块的 `versionCode` 和 `update.json` 里的 `versionCode` 比较：
+
+- 旧版 `10200` → 新版 `10201`：会提示更新
+- 只改代码、不升 `versionCode`：不会提示
+- `v1.0.0` / `v1.1.0` 的旧包没有 `updateJson`：不会提示，需要手动装一次 v1.2.0 及以上
 
 ## 6. 个人主页 README（可选）
 
-1. 新建一个和用户名**完全同名**的仓库，例如 `YOUR_GITHUB_NAME/YOUR_GITHUB_NAME`；
+1. 新建一个和用户名**完全同名**的仓库，例如 `wy15623505520-droid/wy15623505520-droid`；
 2. 把本仓库的 `profile-README.md` 复制进去，重命名为 `README.md`；
-3. 把里面的 `YOUR_GITHUB_NAME` 替换成你的用户名；
-4. 提交后打开 `https://github.com/YOUR_GITHUB_NAME` 就能看到个人主页。
+3. 把里面的 `wy15623505520-droid` 替换成你的用户名；
+4. 提交后打开 `https://github.com/wy15623505520-droid` 就能看到个人主页。
 
 ## 7. 发布前检查
 

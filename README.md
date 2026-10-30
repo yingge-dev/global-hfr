@@ -133,7 +133,7 @@ WebUI → 设置 → 恢复系统默认；或在管理器卸载模块并重启�
 │   ├── app.js
 │   └── assets/             # 截图与下载包
 ├── .github/workflows/      # 打 tag 自动发 Release
-├── update.json             # Magisk 更新配置（需替换仓库地址）
+├── update.json             # 自动生成，无需手改
 ├── profile-README.md       # GitHub 个人主页模板
 └── PUSH.md                 # 上传与发布步骤
 ```
@@ -145,9 +145,22 @@ cd module
 zip -r ../global-hfr.zip .
 ```
 
-或推送 `v*` tag，GitHub Actions 会自动打包并创建 Release。
+
 
 ---
+
+## 发版（自动）
+
+1. 修改 `module/module.prop` 的 `version` 与 `versionCode`；
+2. 提交并推送 `main`；
+3. 打一个和 `version` 完全一致的 tag：
+
+```bash
+git tag v1.2.1
+git push origin v1.2.1
+```
+
+GitHub Actions 会自动打包、创建 Release、更新 `update.json` 和 `docs/assets/global-hfr.zip`，并触发 Pages 构建。之后已安装的旧版本会按 `versionCode` 检查更新。
 
 ## 作者
 
