@@ -37,7 +37,7 @@ if (-not (git config user.email)) {
   git config user.name 'Yingge'
 }
 
-git add module/module.prop
+git add -A
 git commit -m "release: $Version"
 git push
 git tag $Version
