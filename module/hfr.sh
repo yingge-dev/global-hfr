@@ -681,7 +681,9 @@ apply_all() {
     ensure_modes
     apply_display
     if [ "$fast_switch" = 1 ] && [ "$touch" = 1 ] && [ "$sampling" = 0 ] && [ -s "$TOUCHSTATE" ]; then
-        : # 只切显示时跳过触控节点的重复还原/写入，避免 renice 拖慢
+        # 只切显示时跳过触控节点的重复还原/写入，避免 renice 拖慢
+        touch_applied=$(sed -n 's/^touch_applied=//p' "$STATE" 2>/dev/null | head -n 1)
+        is_num "$touch_applied" || touch_applied=0
     else
         apply_touch
     fi

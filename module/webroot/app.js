@@ -384,6 +384,14 @@
     return map[name] || name;
   }
 
+  function inferVerified() {
+    if (!state || !state.live) return;
+    var l = state.live;
+    var t = Number(l.target) || 0;
+    var c = Number(l.current) || 0;
+    if (t > 0 && Math.abs(c - t) <= 2 && Number(l.verified) !== 1) l.verified = 1;
+  }
+
   function renderTouch(t, c) {
     var on = Number(c.touch) === 1;
     var lvl = c.touch_level || 'standard';
@@ -489,6 +497,7 @@
       if (r.json && r.json.ok) {
         demo = false;
         state = r.json;
+        inferVerified();
         render();
       } else if (!state) {
         renderError(r.raw);
