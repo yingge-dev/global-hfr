@@ -8,23 +8,23 @@ $repo = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $repo
 
 if ($Version -notmatch '^v\d+\.\d+\.\d+$') {
-  throw "Version 必须形如 v1.2.3"
+  throw "Version must look like v1.2.3"
 }
 
 if (Test-Path ".git\refs\tags\$Version") {
-  throw "tag $Version 已存在"
+  throw "tag $Version already exists"
 }
 
 $dirty = git status --porcelain
 if ($dirty) {
-  throw "工作区还有未提交的改动，请先提交或撤销后再发版"
+  throw "Working tree has uncommitted changes. Commit or stash them first."
 }
 
 $prop = Join-Path $repo 'module\module.prop'
 $text = [IO.File]::ReadAllText($prop, [Text.Encoding]::UTF8)
 $m = [regex]::Match($text, '(?m)^versionCode=(\d+)\s*$')
 if (-not $m.Success) {
-  throw "module.prop 里找不到 versionCode"
+  throw "versionCode not found in module.prop"
 }
 $newCode = [int]$m.Groups[1].Value + 1
 
@@ -44,6 +44,6 @@ git tag $Version
 git push origin $Version
 
 Write-Host ""
-Write-Host "已推送 $Version（versionCode=$newCode）。"
-Write-Host "GitHub Actions 会自动打包、发 Release、更新 update.json 和 Pages 下载包。"
+Write-Host "Pushed $Version (versionCode=$newCode)."
+Write-Host "GitHub Actions will build the zip, create the release, and update update.json and the Pages download."
 Write-Host "https://github.com/yingge-dev/global-hfr/releases/tag/$Version"
