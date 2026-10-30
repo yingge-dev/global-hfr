@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Build the module zip into docs/assets/global-hfr.zip without extra dependencies."""
 import os
+import shutil
 import zipfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -27,4 +28,6 @@ with zipfile.ZipFile(OUT, 'w', zipfile.ZIP_DEFLATED, compresslevel=9) as z:
                 z.writestr(zi, fh.read(), compress_type=zipfile.ZIP_DEFLATED, compresslevel=9)
             count += 1
 
-print(f'built {OUT} ({count} files, {os.path.getsize(OUT)} bytes)')
+OUT_CN = os.path.join(os.path.dirname(OUT), '真·全局高刷.zip')
+shutil.copyfile(OUT, OUT_CN)
+print(f'built {OUT} and {OUT_CN} ({count} files, {os.path.getsize(OUT)} bytes)')

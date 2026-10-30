@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <a href="docs/assets/global-hfr.zip"><b>⬇ 下载模块</b></a>
+  <a href="docs/assets/%E7%9C%9F%C2%B7%E5%85%A8%E5%B1%80%E9%AB%98%E5%88%B7.zip"><b>⬇ 下载模块</b></a>
   &nbsp;·&nbsp;
   <a href="https://yingge-dev.github.io/global-hfr/">项目主页</a>
   &nbsp;·&nbsp;
@@ -73,7 +73,7 @@
 
 ## 安装
 
-1. 下载 [`global-hfr.zip`](docs/assets/global-hfr.zip)；
+1. 下载 [`global-hfr.zip`](docs/assets/%E7%9C%9F%C2%B7%E5%85%A8%E5%B1%80%E9%AB%98%E5%88%B7.zip)；
 2. 在 **Magisk / KernelSU / APatch** 管理器中选择「从本地安装」；
 3. 重启手机；
 4. 打开 WebUI 调整档位 / 动态区间 / 触控。
@@ -84,6 +84,8 @@
 - Magisk：安装 [KsuWebUI](https://github.com/5ec1cff/KsuWebUIStandalone) 之类的 WebUI 宿主，授予 Root 后打开
 
 > 不要与其他「高刷 / 刷新率 / LTPO / VRR / dfps / Astra」类模块同时启用，会互相抢显示策略。
+
+> 主页下载按钮给的是中文文件名 `真·全局高刷.zip`；管理器自动更新使用 ASCII 的 `global-hfr.zip`，避免 URL 编码兼容问题。
 
 ---
 
@@ -160,7 +162,7 @@ git tag v1.2.2
 git push origin v1.2.2
 ```
 
-GitHub Actions 会自动打包、创建 Release、更新 `update.json` 和 `docs/assets/global-hfr.zip`，并触发 Pages 构建。之后已安装的旧版本会按 `versionCode` 检查更新。
+GitHub Actions 会自动打包、创建 Release、更新 `update.json` 和 `docs/assets/%E7%9C%9F%C2%B7%E5%85%A8%E5%B1%80%E9%AB%98%E5%88%B7.zip`，并触发 Pages 构建。之后已安装的旧版本会按 `versionCode` 检查更新。
 
 ## 作者
 
