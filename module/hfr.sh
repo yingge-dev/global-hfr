@@ -95,6 +95,7 @@ last_verified_hz=""
 measured_hz=""
 sampling_applied=0
 sampling_method=""
+fast_switch=0
 
 load_conf() {
     profile=fixed; fixed_hz=0; dyn_min=60; dyn_max=0
@@ -460,15 +461,27 @@ apply_display() {
             if [ "$deep_lock" != 1 ]; then
                 clear_backdoor
             fi
-            backup_orig
-            put_setting system min_refresh_rate "$mhz"
-            put_setting system peak_refresh_rate "$mhz"
-            put_setting system user_refresh_rate "$mhz"
+            if [ "$fast_switch" = 1 ] && [ "$deep_lock" = 1 ]; then
+                : # 快速切换直接走 SurfaceFlinger 1035，settings 留给完整 apply
+            else
+                backup_orig
+                put_setting system min_refresh_rate "$mhz"
+                put_setting system peak_refresh_rate "$mhz"
+                put_setting system user_refresh_rate "$mhz"
+            fi
             sleep 0.15
             target_hz=$mhz
             if [ "$deep_lock" = 1 ]; then
                 if sf_set "$mid"; then method="SurfaceFlinger · mode $mid"; fi
-                sleep 0.3
+                if [ "$fast_switch" = 1 ]; then sleep 0.05; else sleep 0.3; fi
+            fi
+            if [ "$fast_switch" = 1 ]; then
+                target_hz=$mhz
+                verified=0
+                measured_hz=$mhz
+                [ -n "$method" ] || method="Settings · ${mhz}Hz"
+                method="$method · 待核验"
+                return 0
             fi
             if verify_target "$mhz" "$mid"; then
                 verified=1
@@ -667,7 +680,11 @@ write_state() {
 apply_all() {
     ensure_modes
     apply_display
-    apply_touch
+    if [ "$fast_switch" = 1 ] && [ "$touch" = 1 ] && [ "$sampling" = 0 ] && [ -s "$TOUCHSTATE" ]; then
+        : # 只切显示时跳过触控节点的重复还原/写入，避免 renice 拖慢
+    else
+        apply_touch
+    fi
     if [ "$overlay" = 1 ]; then
         service call SurfaceFlinger 1034 i32 1 >/dev/null 2>&1
     else
@@ -904,6 +921,7 @@ case "$cmd" in
         apply_json
         ;;
     switch)
+        fast_switch=1
         case "$2" in
             fixed)
                 is_num "$3" || { printf '{"ok":0}\n'; exit 2; }
@@ -918,10 +936,12 @@ case "$cmd" in
                 ;;
             off) set_conf profile off ;;
             sampling)
+                fast_switch=0
                 case "$3" in 0|120|240|360|480) ;; *) printf '{"ok":0}\n'; exit 2 ;; esac
                 set_conf sampling "$3"
                 ;;
             touch)
+                fast_switch=0
                 case "$3" in 0|1) ;; *) printf '{"ok":0}\n'; exit 2 ;; esac
                 set_conf touch "$3"
                 [ -n "$4" ] && set_conf touch_level "$4"

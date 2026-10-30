@@ -45,7 +45,6 @@
 - 联发科 `fpsgo` 强制开启
 - 电竞模式额外：GPU governor → `performance`、`sched_boost=1`
 - 触控 HAL / SurfaceFlinger 进程 `renice` 提权
-- **全局触控采样率**：240 / 360 / 480Hz（Xiaomi thp 节点，不需要游戏助手）
 - **所有节点写入前备份原值，关闭或卸载时逐项还原**
 
 ### WebUI

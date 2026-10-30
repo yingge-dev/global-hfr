@@ -95,11 +95,10 @@
     },
     config: {
       profile: 'fixed', fixed_hz: 165, dyn_min: 60, dyn_max: 165,
-      touch: 1, touch_level: 'standard', sampling: 480, deep_lock: 1, overlay: 0,
+      touch: 1, touch_level: 'standard', deep_lock: 1, overlay: 0,
       daemon: 1, auto_boot: 1, oplus_props: 0
     },
     live: { current: 165, target: 165, verified: 1, method: 'SurfaceFlinger · mode 5', updated: Math.floor(Date.now() / 1000) },
-    sampling: { value: 480, exists: 1, applied: 1, path: '/sys/class/touch/touch_dev/touch_thp_ic_cmd' },
     touch: {
       enabled: 1, level: 'standard', applied: 3,
       nodes: [
@@ -390,10 +389,6 @@
     var lvl = c.touch_level || 'standard';
     var nodes = t.nodes || [];
     var applied = Number(t.applied) || 0;
-    var sp = (state && state.sampling) || {};
-    var rate = Number(c.sampling) || 0;
-    var nodeExists = Number(sp.exists) === 1;
-    var rateApplied = Number(sp.applied) === 1;
 
     $('#touchSwitch').checked = on;
     $('#touchSwitch2').checked = on;
@@ -401,28 +396,11 @@
       b.classList.toggle('on', b.getAttribute('data-level') === lvl);
     });
 
-    var extra = rate > 0 ? (' · 采样 ' + rate + 'Hz') : '';
     $('#touchSummary').textContent = on ?
-      ('已启用 · ' + applied + ' 项生效 · ' + (lvl === 'esports' ? '电竞' : '标准') + extra) :
+      ('已启用 · ' + applied + ' 项生效 · ' + (lvl === 'esports' ? '电竞' : '标准')) :
       '已关闭 · 未写入内核节点';
     $('#touchHeroState').textContent = on ?
-      ('运行中 · ' + (lvl === 'esports' ? '电竞模式（高耗电）' : '标准模式') + extra) : '已关闭';
-
-    $$('#samplingSeg button').forEach(function (b) {
-      var r = Number(b.getAttribute('data-rate')) || 0;
-      b.classList.toggle('on', r === rate);
-      b.disabled = (r > 0 && !nodeExists);
-    });
-    if (!nodeExists) {
-      $('#samplingState').textContent = '未检测到节点';
-      $('#samplingHint').innerHTML = '当前机型没有暴露 <code>touch_thp_ic_cmd</code>。这类机型的采样率由厂商 HAL / 游戏助手控制，通用模块无法绕过。';
-    } else if (rate > 0) {
-      $('#samplingState').textContent = rateApplied ? ('已写入 ' + rate + 'Hz') : ('已设置 ' + rate + 'Hz');
-      $('#samplingHint').innerHTML = '已检测到 Xiaomi thp 节点，写入后无需游戏助手；切换后滑动测试。480Hz 会更耗电。';
-    } else {
-      $('#samplingState').textContent = '未启用';
-      $('#samplingHint').innerHTML = '打开后可全局提高触控报点率，不依赖游戏助手加白名单；只对暴露 thp 节点的机型有效。';
-    }
+      ('运行中 · ' + (lvl === 'esports' ? '电竞模式（高耗电）' : '标准模式')) : '已关闭';
 
     var body = nodes.map(function (n) {
       var cls = n.exists ? (n.ok ? 'ok' : '') : 'miss';
@@ -588,10 +566,22 @@
     } else if (kind === 'level') {
       cfg.touch_level = value;
       cfg.touch = 1;
-    } else if (kind === 'sampling') {
-      cfg.sampling = Number(value);
-      if (state.sampling) state.sampling.applied = 0;
     }
+    render();
+  }
+
+  function applyResult(j) {
+    if (!j || !state) return;
+    var c = state.config || (state.config = {});
+    if (j.profile) c.profile = j.profile;
+    if (c.profile === 'fixed' && Number(j.target) > 0) c.fixed_hz = Number(j.target);
+    var live = state.live || (state.live = {});
+    live.current = Number(j.current) || 0;
+    live.target = Number(j.target) || 0;
+    live.verified = Number(j.verified) || 0;
+    live.method = j.method || '';
+    live.updated = Math.floor(Date.now() / 1000);
+    if (state.touch) state.touch.applied = Number(j.touch_applied) || 0;
     render();
   }
 
@@ -606,9 +596,10 @@
         await refresh({ silent: true });
         return;
       }
-      await refresh({ silent: true });
+      applyResult(r.json);
       var tail = r.json.verified ? ' · 已核验' : ' · 待核验';
       toast(okMsg + tail, r.json.verified ? 'ok' : '');
+      setTimeout(function () { refresh({ silent: true }); }, 1200);
     } finally {
       setBusy(false);
     }
@@ -682,13 +673,6 @@
         var lvl = b.getAttribute('data-level');
         applySwitch('touch 1 ' + lvl, lvl === 'esports' ? '已切换电竞触控' : '已切换标准触控', 'level', lvl);
       });
-    });
-
-    $('#samplingSeg').addEventListener('click', function (e) {
-      var b = e.target.closest('button');
-      if (!b || b.disabled) return;
-      var rate = Number(b.getAttribute('data-rate')) || 0;
-      applySwitch('sampling ' + rate, rate ? ('采样率已设为 ' + rate + 'Hz') : '采样率已恢复', 'sampling', rate);
     });
 
     $('#swDeep').addEventListener('change', function () {
