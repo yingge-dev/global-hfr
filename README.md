@@ -19,9 +19,9 @@
 <p align="center">
   <a href="docs/assets/global-hfr.zip"><b>⬇ 下载模块</b></a>
   &nbsp;·&nbsp;
-  <a href="https://wy15623505520-droid.github.io/global-hfr/">项目主页</a>
+  <a href="https://yingge-dev.github.io/global-hfr/">项目主页</a>
   &nbsp;·&nbsp;
-  <a href="https://github.com/wy15623505520-droid/global-hfr/releases/latest">Releases</a>
+  <a href="https://github.com/yingge-dev/global-hfr/releases/latest">Releases</a>
 </p>
 
 ---
@@ -156,8 +156,8 @@ zip -r ../global-hfr.zip .
 3. 打一个和 `version` 完全一致的 tag：
 
 ```bash
-git tag v1.2.1
-git push origin v1.2.1
+git tag v1.2.2
+git push origin v1.2.2
 ```
 
 GitHub Actions 会自动打包、创建 Release、更新 `update.json` 和 `docs/assets/global-hfr.zip`，并触发 Pages 构建。之后已安装的旧版本会按 `versionCode` 检查更新。
@@ -166,8 +166,8 @@ GitHub Actions 会自动打包、创建 Release、更新 `update.json` 和 `docs
 
 **颖哥** · Android 玩机 / 模块开发
 
-- 项目主页：`https://wy15623505520-droid.github.io/global-hfr/`
-- GitHub：`https://github.com/wy15623505520-droid`
+- 项目主页：`https://yingge-dev.github.io/global-hfr/`
+- GitHub：`https://github.com/yingge-dev`
 
 ## License
 

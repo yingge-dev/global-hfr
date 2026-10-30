@@ -2,7 +2,7 @@
   'use strict';
 
   /* GitHub 仓库：部署到 <user>.github.io/<repo>/ 时自动识别，否则用下面的占位符 */
-  var REPO = 'wy15623505520-droid/global-hfr';
+  var REPO = 'yingge-dev/global-hfr';
   try {
     var host = location.hostname;
     var seg = location.pathname.split('/').filter(Boolean);

@@ -2,7 +2,7 @@
 
 ## 0. 先替换占位符
 
-把下面文件里的 `wy15623505520-droid` 全部替换成你的 GitHub 用户名（例如 `yingge`）：
+把下面文件里的 `yingge-dev` 全部替换成你的 GitHub 用户名（例如 `yingge`）：
 
 - `README.md`
 - `update.json`
@@ -29,7 +29,7 @@ git init
 git add .
 git commit -m "feat: 真·全局高刷 v1.2.0"
 git branch -M main
-git remote add origin https://github.com/wy15623505520-droid/global-hfr.git
+git remote add origin https://github.com/yingge-dev/global-hfr.git
 git push -u origin main
 ```
 
@@ -51,7 +51,7 @@ gh repo create global-hfr --public --source=. --remote=origin --push
 等 1–2 分钟，访问：
 
 ```text
-https://wy15623505520-droid.github.io/global-hfr/
+https://yingge-dev.github.io/global-hfr/
 ```
 
 `docs/.nojekyll` 已放好，避免 Jekyll 处理静态资源。
@@ -61,18 +61,18 @@ https://wy15623505520-droid.github.io/global-hfr/
 只需要改 `module/module.prop`：
 
 ```ini
-version=v1.2.1
-versionCode=10201
+version=v1.2.2
+versionCode=10202
 ```
 
 提交后打 tag，**tag 必须和 version 完全一致**：
 
 ```bash
 git add .
-git commit -m "release: v1.2.1"
+git commit -m "release: v1.2.2"
 git push
-git tag v1.2.1
-git push origin v1.2.1
+git tag v1.2.2
+git push origin v1.2.2
 ```
 
 推送 tag 后，`.github/workflows/release.yml` 会自动：
@@ -90,16 +90,16 @@ git push origin v1.2.1
 
 管理器会拿已安装模块的 `versionCode` 和 `update.json` 里的 `versionCode` 比较：
 
-- 旧版 `10200` → 新版 `10201`：会提示更新
+- 旧版 `10200` → 新版 `10202`：会提示更新
 - 只改代码、不升 `versionCode`：不会提示
 - `v1.0.0` / `v1.1.0` 的旧包没有 `updateJson`：不会提示，需要手动装一次 v1.2.0 及以上
 
 ## 6. 个人主页 README（可选）
 
-1. 新建一个和用户名**完全同名**的仓库，例如 `wy15623505520-droid/wy15623505520-droid`；
+1. 新建一个和用户名**完全同名**的仓库，例如 `yingge-dev/yingge-dev`；
 2. 把本仓库的 `profile-README.md` 复制进去，重命名为 `README.md`；
-3. 把里面的 `wy15623505520-droid` 替换成你的用户名；
-4. 提交后打开 `https://github.com/wy15623505520-droid` 就能看到个人主页。
+3. 把里面的 `yingge-dev` 替换成你的用户名；
+4. 提交后打开 `https://github.com/yingge-dev` 就能看到个人主页。
 
 ## 7. 发布前检查
 
