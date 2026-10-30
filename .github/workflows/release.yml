@@ -7,6 +7,11 @@ on:
 
 permissions:
   contents: write
+  pages: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   release:
@@ -14,16 +19,59 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify tag matches module.prop
+        run: |
+          VERSION=$(sed -n 's/^version=//p' module/module.prop | head -n 1)
+          echo "module version: $VERSION / tag: ${GITHUB_REF_NAME}"
+          if [ "$VERSION" != "${GITHUB_REF_NAME}" ]; then
+            echo "tag 和 module.prop 的 version 不一致" >&2
+            exit 1
+          fi
 
       - name: Build module zip
         run: |
           cd module
-          zip -r ../global-hfr.zip .
+          zip -r "$RUNNER_TEMP/global-hfr.zip" .
           cd ..
-          unzip -l global-hfr.zip
+          unzip -l "$RUNNER_TEMP/global-hfr.zip"
 
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
-          files: global-hfr.zip
+          files: ${{ runner.temp }}/global-hfr.zip
           generate_release_notes: true
+
+      - name: Update manifest and Pages zip on main
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          VERSION=$(sed -n 's/^version=//p' module/module.prop | head -n 1)
+          CODE=$(sed -n 's/^versionCode=//p' module/module.prop | head -n 1)
+          TAG="${GITHUB_REF_NAME}"
+
+          printf '{\n  "version": "%s",\n  "versionCode": %s,\n  "zipUrl": "https://github.com/%s/releases/download/%s/global-hfr.zip",\n  "changelog": "https://github.com/%s/releases/tag/%s"\n}\n' \
+            "$VERSION" "$CODE" "$GITHUB_REPOSITORY" "$TAG" "$GITHUB_REPOSITORY" "$TAG" \
+            > "$RUNNER_TEMP/update.json"
+
+          cp "$RUNNER_TEMP/global-hfr.zip" "$RUNNER_TEMP/pages.zip"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout main
+          git pull --rebase origin main
+          cp "$RUNNER_TEMP/update.json" update.json
+          cp "$RUNNER_TEMP/pages.zip" docs/assets/global-hfr.zip
+
+          git add update.json docs/assets/global-hfr.zip
+          if git diff --cached --quiet; then
+            echo "manifest 无变化，跳过提交"
+          else
+            git commit -m "chore: update manifest for ${TAG}"
+            git push origin main
+          fi
+
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/pages/builds" || true

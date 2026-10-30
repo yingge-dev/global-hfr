@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.2.1
+
+- 发布流程自动化：推送 * tag 后，GitHub Actions 自动打包、创建 Release、更新 update.json 与 Pages 下载包
+
 ## v1.2.0
 
 - WebUI 改为玻璃拟态：半透明材质、分组列表、开关与分段控件、自动 / 浅色 / 深色三档主题
