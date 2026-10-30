@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#eef3fa" id="themeColor">
+<script>try{var t=localStorage.getItem("hfr_theme_v1");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t);}catch(e){}</script>
+<title>真·全局高刷 · 颖哥</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="bg" aria-hidden="true">
+  <span class="orb o1"></span>
+  <span class="orb o2"></span>
+  <span class="orb o3"></span>
+  <span class="grid"></span>
+  <span class="noise"></span>
+</div>
+
+<header class="top">
+  <div class="brand">
+    <div class="mark"><span>颖</span></div>
+    <div class="brand-txt">
+      <h1>真·全局高刷</h1>
+      <p>TRUE GLOBAL REFRESH</p>
+    </div>
+  </div>
+  <button class="dev-pill" id="devPill" type="button">
+    <span class="dot" id="devDot"></span>
+    <b id="devName">读取中</b>
+    <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
+  </button>
+</header>
+
+<main id="main">
+
+  <!-- ================= 刷新率 ================= -->
+  <section class="page on" id="page-rate">
+
+    <div class="hero card">
+      <div class="hero-head">
+        <div class="eyebrow"><span class="pulse" id="liveDot"></span><span id="liveLabel">正在连接模块引擎</span></div>
+        <button class="icon-btn" id="btnRefresh" type="button" aria-label="刷新状态">
+          <svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 6.3"/><path d="M20 4v7h-7"/></svg>
+        </button>
+      </div>
+
+      <div class="gauge-wrap">
+        <svg class="gauge" viewBox="0 0 240 240" aria-hidden="true">
+          <defs>
+            <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#0a84ff"/>
+              <stop offset="52%" stop-color="#af52de"/>
+              <stop offset="100%" stop-color="#ff2d55"/>
+            </linearGradient>
+            <filter id="ringGlow" x="-40%" y="-40%" width="180%" height="180%">
+              <feGaussianBlur stdDeviation="6" result="b"/>
+              <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+          <circle class="track" cx="120" cy="120" r="96"/>
+          <circle class="prog" id="ring" cx="120" cy="120" r="96"/>
+          <g class="ticks" id="ticks"></g>
+        </svg>
+        <div class="gauge-center">
+          <div class="hz"><b id="curHz">--</b><span>Hz</span></div>
+          <div class="hz-tag" id="curTag">待机</div>
+        </div>
+      </div>
+
+      <div class="hero-stats">
+        <div><em>面板最高</em><b id="statMax">--</b></div>
+        <div><em>当前目标</em><b id="statTarget">--</b></div>
+        <div><em>核验状态</em><b id="statVerify">--</b></div>
+      </div>
+      <div class="method" id="methodLine">正在读取 SurfaceFlinger 状态…</div>
+    </div>
+
+    <div class="presets" id="presets">
+      <button class="preset" type="button" data-preset="max">
+        <span class="p-ico">
+          <svg viewBox="0 0 24 24"><path d="M13 2L4.5 13.5H11l-1 8.5L19.5 10H13z"/></svg>
+        </span>
+        <b>全局最高</b>
+        <em>锁定面板峰值</em>
+      </button>
+      <button class="preset" type="button" data-preset="dynamic">
+        <span class="p-ico">
+          <svg viewBox="0 0 24 24"><path d="M3 15c2.5 0 2.5-6 5-6s2.5 6 5 6 2.5-6 5-6 2.5 6 5 6"/></svg>
+        </span>
+        <b>动态刷新</b>
+        <em>区间内自适应</em>
+      </button>
+      <button class="preset" type="button" data-preset="off">
+        <span class="p-ico">
+          <svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-3.2-6.4"/><path d="M20 5v6h-6"/></svg>
+        </span>
+        <b>系统默认</b>
+        <em>交还系统调度</em>
+      </button>
+    </div>
+
+    <section class="block">
+      <div class="block-h">
+        <h2>刷新率档位</h2>
+        <span>轻触即锁定</span>
+      </div>
+      <div class="rates" id="rates">
+        <div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div>
+      </div>
+      <p class="fine" id="ratesHint">正在扫描显示档位…</p>
+    </section>
+
+    <section class="block">
+      <div class="block-h">
+        <h2>动态刷新率</h2>
+        <span class="tag">LTPO</span>
+      </div>
+      <div class="dyn">
+        <div class="dyn-row">
+          <label class="sel">
+            <em>下限</em>
+            <select id="dynMin"></select>
+          </label>
+          <span class="dash"></span>
+          <label class="sel">
+            <em>上限</em>
+            <select id="dynMax"></select>
+          </label>
+        </div>
+        <div class="dyn-bar">
+          <i id="dynFill"></i>
+          <b id="dynLabel">60 – 120 Hz</b>
+        </div>
+        <div class="dyn-presets" id="dynPresets"></div>
+        <button class="btn ghost" id="btnApplyDyn" type="button">应用动态区间</button>
+      </div>
+      <p class="fine">静态画面自动降频省电，滑动与触控瞬间回到上限；区间交给面板 LTPO 硬件调度。</p>
+    </section>
+
+    <section class="block touch-card">
+      <div class="row">
+        <div class="row-txt">
+          <h3>触控加速</h3>
+          <p id="touchSummary">输入链路提权，滑动更跟手</p>
+        </div>
+        <label class="switch"><input type="checkbox" id="touchSwitch"><i></i></label>
+      </div>
+      <div class="seg" id="touchLevelSeg">
+        <button type="button" data-level="standard">标准</button>
+        <button type="button" data-level="esports">电竞</button>
+      </div>
+    </section>
+
+    <p class="tip" id="tipLine">提示：首次使用建议先点「全局最高」，回桌面滑动几次确认帧率稳定。</p>
+  </section>
+
+  <!-- ================= 触控 ================= -->
+  <section class="page" id="page-touch">
+    <div class="page-h">
+      <h1>触控</h1>
+      <p>输入优先级 · 内核 boost · 渲染提频</p>
+    </div>
+
+    <div class="card touch-hero">
+      <div class="row">
+        <div class="row-txt">
+          <h3>触控加速</h3>
+          <p id="touchHeroState">读取中…</p>
+        </div>
+        <label class="switch"><input type="checkbox" id="touchSwitch2"><i></i></label>
+      </div>
+      <div class="seg wide" id="touchLevelSeg2">
+        <button type="button" data-level="standard">标准</button>
+        <button type="button" data-level="esports">电竞</button>
+      </div>
+      <p class="fine">标准：输入 boost + 触控 HAL 提权。电竞：额外提升 GPU 频率策略与调度器 boost，耗电增加。</p>
+    </div>
+
+    <section class="block">
+      <div class="block-h">
+        <h2>生效节点</h2>
+        <span id="touchCount">--</span>
+      </div>
+      <ul class="nodes" id="nodes"></ul>
+      <p class="fine">仅写入真实存在的内核节点，并记录原值用于恢复；不同机型可用节点不同。</p>
+    </section>
+
+    <section class="block note">
+      <h3>关于「跟手」</h3>
+      <p>高刷负责画面更新频率，触控加速负责缩短从触摸到渲染的链路延迟。二者叠加，滑动才既顺滑又跟手。</p>
+      <p>模块不会修改触控采样率固件，采样率由屏幕与厂商 HAL 决定；模块做的是让输入事件更快被调度、更快上屏。</p>
+    </section>
+  </section>
+
+  <!-- ================= 设置 ================= -->
+  <section class="page" id="page-set">
+    <div class="page-h">
+      <h1>设置</h1>
+      <p>锁定策略 · 运行方式 · 设备信息</p>
+    </div>
+
+    <section class="block">
+      <div class="block-h"><h2>外观</h2><span>Glass</span></div>
+      <div class="list">
+        <div class="list-row col">
+          <div><b>主题</b><em>跟随系统 / 浅色 / 深色</em></div>
+          <div class="seg" id="themeSeg">
+            <button type="button" data-theme="auto">自动</button>
+            <button type="button" data-theme="light">浅色</button>
+            <button type="button" data-theme="dark">深色</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="block">
+      <div class="block-h"><h2>刷新率策略</h2></div>
+      <div class="list">
+        <div class="list-row">
+          <div><b>深度锁帧</b><em>SurfaceFlinger 底层锁定，压住应用自身帧率投票</em></div>
+          <label class="switch"><input type="checkbox" id="swDeep"><i></i></label>
+        </div>
+        <div class="list-row">
+          <div><b>帧率浮窗</b><em>系统原生刷新率指示器，用于肉眼核验</em></div>
+          <label class="switch"><input type="checkbox" id="swOverlay"><i></i></label>
+        </div>
+        <div class="list-row" id="rowOplus" hidden>
+          <div><b>OPPO 兼容模式</b><em>关闭欧加 LTPO 动态帧率开关，重启后生效</em></div>
+          <label class="switch"><input type="checkbox" id="swOplus"><i></i></label>
+        </div>
+      </div>
+    </section>
+
+    <section class="block">
+      <div class="block-h"><h2>运行方式</h2></div>
+      <div class="list">
+        <div class="list-row">
+          <div><b>开机自动应用</b><em>开机完成后自动恢复上次配置</em></div>
+          <label class="switch"><input type="checkbox" id="swBoot"><i></i></label>
+        </div>
+        <div class="list-row">
+          <div><b>后台守护</b><em>息屏亮屏与漂移时自动重新锁定</em></div>
+          <label class="switch"><input type="checkbox" id="swDaemon"><i></i></label>
+        </div>
+      </div>
+    </section>
+
+    <section class="block">
+      <div class="block-h"><h2>设备</h2></div>
+      <div class="kv" id="deviceKv"></div>
+    </section>
+
+    <section class="block">
+      <div class="block-h"><h2>维护</h2></div>
+      <div class="list">
+        <button class="list-row act" type="button" id="btnScan">
+          <div><b>重新扫描显示档位</b><em>刷入超频 DTBO 后使用</em></div>
+          <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
+        </button>
+        <button class="list-row act" type="button" id="btnLog">
+          <div><b>运行日志</b><em>最近 120 行执行记录</em></div>
+          <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
+        </button>
+        <button class="list-row act danger" type="button" id="btnRestore">
+          <div><b>恢复系统默认</b><em>还原刷新率设置与触控节点</em></div>
+          <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
+        </button>
+      </div>
+    </section>
+
+    <section class="about">
+      <div class="about-mark">颖</div>
+      <div>
+        <b>真·全局高刷 <span id="aboutVer">v1.2.0</span></b>
+        <em>作者 · 颖哥</em>
+      </div>
+    </section>
+    <p class="tip">修改系统显示策略存在兼容性风险。若出现闪屏、黑屏或耗电异常，请点「恢复系统默认」并重启。</p>
+  </section>
+
+</main>
+
+<nav class="tabbar" id="tabbar">
+  <span class="ind" id="tabInd"></span>
+  <button class="tab on" type="button" data-tab="rate">
+    <svg viewBox="0 0 24 24"><path d="M4 17a8 8 0 1 1 16 0"/><path d="M12 17l4.6-5.4"/><circle cx="12" cy="17" r="1.4"/></svg>
+    <span>刷新率</span>
+  </button>
+  <button class="tab" type="button" data-tab="touch">
+    <svg viewBox="0 0 24 24"><path d="M9 11V5.5a1.5 1.5 0 0 1 3 0V11"/><path d="M12 11V4.5a1.5 1.5 0 0 1 3 0V11"/><path d="M15 11V6.5a1.5 1.5 0 0 1 3 0V14a6 6 0 0 1-6 6h-1.6a5 5 0 0 1-3.7-1.7L5 15.5a1.6 1.6 0 0 1 2.4-2l1.6 1.6"/></svg>
+    <span>触控</span>
+  </button>
+  <button class="tab" type="button" data-tab="set">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.3 1a7 7 0 0 0-2-1.2L14.2 3h-4.4l-.4 2.7a7 7 0 0 0-2 1.2l-2.3-1-2 3.4 2 1.5A7 7 0 0 0 5 12a7 7 0 0 0 .1 1.2l-2 1.5 2 3.4 2.3-1a7 7 0 0 0 2 1.2l.4 2.7h4.4l.4-2.7a7 7 0 0 0 2-1.2l2.3 1 2-3.4-2-1.5A7 7 0 0 0 19 12z"/></svg>
+    <span>设置</span>
+  </button>
+</nav>
+
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true">
+  <div class="grip"></div>
+  <div class="sheet-body" id="sheetBody"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>

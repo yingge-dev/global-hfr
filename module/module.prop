@@ -1,0 +1,7 @@
+id=global_hfr
+name=真·全局高刷
+version=v1.2.0
+versionCode=10200
+author=颖哥
+description=真·全局高刷 · 小米 / OPPO / 一加 全平台 · 60/120/144/165/185Hz 与动态刷新率 · 触控增强 · WebUI 控制
+updateJson=https://raw.githubusercontent.com/wy15623505520-droid/global-hfr/main/update.json
