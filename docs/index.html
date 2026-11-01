@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#eef3fa" id="themeColor">
-<meta name="description" content="真·全局高刷：小米 / OPPO / 一加全平台，60–185Hz 固定档位、动态刷新率、触控加速与玻璃拟态 WebUI。">
+<meta name="description" content="真·全局高刷 v2.0.0：小米 / OPPO / 一加 / realme 与通用机型，60–185Hz 固定档位，原生 / 自适应动态刷新率，触控加速与玻璃拟态 WebUI。">
 <title>真·全局高刷 · 小米 / OPPO / 一加全平台</title>
 <link rel="stylesheet" href="style.css">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop stop-color='%230a84ff'/%3E%3Cstop offset='1' stop-color='%23af52de'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='18' fill='url(%23g)'/%3E%3Ctext x='32' y='44' font-size='34' text-anchor='middle' fill='white' font-family='sans-serif'%3E颖%3C/text%3E%3C/svg%3E">
@@ -23,6 +23,7 @@
     <a href="#lock">原理</a>
     <a href="#shots">截图</a>
     <a href="#install">安装</a>
+    <a href="#changelog">更新</a>
     <a href="#faq">FAQ</a>
   </nav>
   <div class="nav-act">
@@ -40,9 +41,9 @@
 <main id="top">
   <section class="hero">
     <div class="hero-copy">
-      <span class="eyebrow"><i></i> Android 11+ · Magisk / KernelSU / APatch</span>
+      <span class="eyebrow"><i></i> v2.0.0 · Android 11+ · Magisk / KernelSU / APatch</span>
       <h1>把高刷，<br><span>锁进系统底层。</span></h1>
-      <p class="lead">真·全局高刷，小米 / OPPO / 一加全平台。60–185Hz 固定档位，60–165Hz 动态区间，触控加速与玻璃拟态 WebUI。不是只写一个 <code>settings</code> 就自称全局。</p>
+      <p class="lead">真·全局高刷 v2.0.0。60–185Hz 固定档位，原生 / 自适应双动态引擎，静止降 60、触控回峰值；触控加速与玻璃拟态 WebUI。不是只写一个 <code>settings</code> 就自称全局。</p>
       <div class="cta">
         <a class="btn blue" href="assets/global-hfr.zip" download="真·全局高刷.zip">
           <svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></svg>
@@ -85,8 +86,8 @@
       </article>
       <article class="card reveal">
         <span class="ico"><svg viewBox="0 0 24 24"><path d="M3 15c2.5 0 2.5-6 5-6s2.5 6 5 6 2.5-6 5-6 2.5 6 5 6"/></svg></span>
-        <h3>动态刷新率</h3>
-        <p>60–120 / 60–144 / 60–165 / 30–120 / 10–120，交给 LTPO 在区间内调度，静态省电、滑动回峰值。</p>
+        <h3>原生 / 自适应动态</h3>
+        <p>原生：系统按画面内容调度，最省电；自适应：触控升到上限，静止 3 秒回到下限。60–120 / 60–144 / 60–165 / 120–165 多档可选。</p>
       </article>
       <article class="card reveal">
         <span class="ico"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg></span>
@@ -131,7 +132,7 @@
         <span class="num">03</span>
         <div><b>回读核验</b><p>读 <code>dumpsys display</code> 的实际刷新率与 active mode，没到目标就重试；仍失败就标“待核验”，不假装成功。</p></div>
       </div>
-      <p class="lock-note">动态区间则相反：先解除底层锁，再把上下限交还 LTPO。两种模式互不打架。</p>
+      <p class="lock-note">动态区间不再依赖“解除底层锁”：原生模式写回范围；自适应模式直接切换底层模式，所以从小米固定档切回动态也能立即生效，不必重启。</p>
     </div>
   </section>
 
@@ -157,12 +158,43 @@
     </div>
     <div class="steps">
       <div class="step card reveal"><b>01</b><h3>安装模块</h3><p>Magisk / KernelSU / APatch 管理器 → 从本地安装 → 选择 zip。</p></div>
-      <div class="step card reveal"><b>02</b><h3>重启手机</h3><p>首次开机会自动锁定面板最高刷新率，之后可在 WebUI 改。</p></div>
+      <div class="step card reveal"><b>02</b><h3>重启手机</h3><p>首次开机会自动应用 60Hz–面板最高的动态刷新率，之后可在 WebUI 改固定 / 动态。</p></div>
       <div class="step card reveal"><b>03</b><h3>打开 WebUI</h3><p>KernelSU / APatch 模块页直接开；Magisk 安装 KsuWebUI 并授予 Root。</p></div>
     </div>
     <div class="install-cta reveal">
       <a class="btn blue big" href="assets/global-hfr.zip" download="真·全局高刷.zip">下载 真·全局高刷.zip</a>
-      <span>Android 11+ · 约 38 KB · v1.3.0</span>
+      <span>Android 11+ · 约 39 KB · v2.0.0</span>
+    </div>
+  </section>
+
+  <section class="section" id="changelog">
+    <div class="sec-head reveal">
+      <span class="eyebrow"><i></i> CHANGELOG</span>
+      <h2>v2.0.0<br>这次修的是根子。</h2>
+      <p>旧版动态只写 peak / min，HyperOS 的 secure 刷新率与底层锁残留会让屏幕一直停在最高档。</p>
+    </div>
+    <div class="lock-card card reveal">
+      <div class="lock-row">
+        <span class="num">01</span>
+        <div><b>动态真的会降到 60 了</b><p>补充 HyperOS <code>miui_refresh_rate</code>，修复静态画面不降频；新增自适应引擎，触控升上限、静止 3 秒回下限。</p></div>
+      </div>
+      <div class="lock-row">
+        <span class="num">02</span>
+        <div><b>60–165Hz 动态可用</b><p>系统策略把原生动态限制在 120Hz 时，自适应模式直接切换底层模式，60 / 120 / 144 / 165 全档可用。</p></div>
+      </div>
+      <div class="lock-row">
+        <span class="num">03</span>
+        <div><b>固定 → 动态不再卡死</b><p>底层锁残留会自动识别：切动态自动走自适应，立即生效；切原生会提示重启一次，不再假装成功。</p></div>
+      </div>
+      <div class="lock-row">
+        <span class="num">04</span>
+        <div><b>WebUI 延迟从秒级降到 0.15s</b><p>状态查询改为缓存文件 + 内置解析，不再每次轮询都跑 <code>dumpsys</code>；切换档位单进程完成。</p></div>
+      </div>
+      <div class="lock-row">
+        <span class="num">05</span>
+        <div><b>按机型识别 + 检查更新</b><p>自动识别系统原生上限、面板档位与厂商；WebUI 新增动态实现选择、静止降频时间、GitHub 新版本提示与更新日志。</p></div>
+      </div>
+      <p class="lock-note">已知限制：部分 HyperOS 机型把 165Hz 作为“底层增强模式”，系统原生动态最高 120Hz；需要 165Hz 动态请选「自适应」或「全局最高」。</p>
     </div>
   </section>
 
@@ -179,6 +211,8 @@
       <details class="reveal"><summary>耗电会不会变高？</summary><p>固定 165/185Hz 全程锁死必然更耗电。日常建议动态区间或 120Hz；电竞触控也会提高 GPU/调度功耗。可以先试动态模式。</p></details>
       <details class="reveal"><summary>出问题怎么恢复？</summary><p>WebUI → 设置 → 恢复系统默认；或直接在管理器卸载模块并重启。卸载脚本会还原刷新率设置、逐项还原触控节点、关闭浮层与底层锁。</p></details>
       <details class="reveal"><summary>截图里为什么写“界面示意”？</summary><p>因为那些图是浏览器渲染的界面预览，不是真机实拍。模块的实际效果取决于机型、ROM 和内核，建议以自己设备上的“已核验”状态和帧率浮窗为准。</p></details>
+      <details class="reveal"><summary>为什么原生动态最高只有 120Hz，面板明明是 165Hz？</summary><p>部分 HyperOS 把 144 / 165Hz 作为底层增强档，系统策略的 <code>mLockedMaxRefreshRate</code> 只允许 120Hz。WebUI 会显示「系统上限」；要跑满 165Hz 动态，请把动态实现切到「自适应」，或使用「全局最高」。</p></details>
+      <details class="reveal"><summary>刷了旧版，怎么知道有新版？</summary><p>模块内置 <code>updateJson</code>，KernelSU / APatch / Magisk 的模块页会显示更新角标；新版 WebUI 也会在打开时检查 GitHub 并在顶部显示新版本提示。每次发版都会更新 <code>update.json</code> 与本页更新日志。</p></details>
     </div>
   </section>
 

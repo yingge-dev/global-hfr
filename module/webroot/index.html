@@ -32,6 +32,12 @@
   </button>
 </header>
 
+<button class="update-bar" id="updateBar" type="button" hidden>
+  <span class="ub-dot"></span>
+  <span class="ub-txt"><b>发现新版本 <i id="updateVer"></i></b><em id="updateNote">点此查看更新内容</em></span>
+  <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
+</button>
+
 <main id="main">
 
   <!-- ================= 刷新率 ================= -->
@@ -134,8 +140,28 @@
         </div>
         <div class="dyn-presets" id="dynPresets"></div>
         <button class="btn ghost" id="btnApplyDyn" type="button">应用动态区间</button>
+
+        <div class="dyn-engine">
+          <div class="engine-h"><b>动态实现</b><span id="dynEngineHint">自动选择</span></div>
+          <div class="seg wide" id="dynEngineSeg">
+            <button type="button" data-engine="auto">自动</button>
+            <button type="button" data-engine="native">原生</button>
+            <button type="button" data-engine="adaptive">自适应</button>
+          </div>
+          <div class="dyn-row idle-row">
+            <label class="sel">
+              <em>静止多久降到下限</em>
+              <select id="dynIdle">
+                <option value="2000">2 秒</option>
+                <option value="3000">3 秒</option>
+                <option value="5000">5 秒</option>
+                <option value="8000">8 秒</option>
+              </select>
+            </label>
+          </div>
+        </div>
       </div>
-      <p class="fine">静态画面自动降频省电，滑动与触控瞬间回到上限；区间交给面板 LTPO 硬件调度。</p>
+      <p class="fine">原生：交给系统按画面内容调度，最省电。自适应：模块在触控后升到上限、静止后降到下限，兼容底层锁帧残留。</p>
     </section>
 
     <section class="block touch-card">
@@ -152,7 +178,7 @@
       </div>
     </section>
 
-    <p class="tip" id="tipLine">提示：首次使用建议先点「全局最高」，回桌面滑动几次确认帧率稳定。</p>
+    <p class="tip" id="tipLine">提示：日常建议「动态刷新」省电；需要全程满帧再选「全局最高」。切换后观察一分钟，确认静止降频与触控升频正常。</p>
   </section>
 
   <!-- ================= 触控 ================= -->
@@ -262,6 +288,10 @@
           <div><b>运行日志</b><em>最近 120 行执行记录</em></div>
           <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
         </button>
+        <button class="list-row act" type="button" id="btnChangelog">
+          <div><b>检查更新</b><em id="changelogHint">查看新版本与更新日志</em></div>
+          <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
+        </button>
         <button class="list-row act danger" type="button" id="btnRestore">
           <div><b>恢复系统默认</b><em>还原刷新率设置与触控节点</em></div>
           <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
@@ -272,7 +302,7 @@
     <section class="about">
       <div class="about-mark">颖</div>
       <div>
-        <b>真·全局高刷 <span id="aboutVer">v1.2.0</span></b>
+        <b>真·全局高刷 <span id="aboutVer">v2.0.0</span></b>
         <em>作者 · 颖哥</em>
       </div>
     </section>

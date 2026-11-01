@@ -1,5 +1,5 @@
 #!/system/bin/sh
-# 全局高刷 · 操作按钮：快速切换「全局最高」与「系统默认」
+# Global HFR · action button
 MODDIR=${0%/*}
 HFR="$MODDIR/hfr.sh"
 

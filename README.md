@@ -2,10 +2,11 @@
   <img src="screenshots/01_封面.png" alt="真·全局高刷" width="100%">
 </p>
 
-<h1 align="center">真·全局高刷</h1>
+<h1 align="center">真·全局高刷 v2.0.0</h1>
 
 <p align="center">
-  小米 / OPPO / 一加 全平台 · 60–185Hz · 动态刷新率 · 触控增强 · 玻璃拟态 WebUI
+  小米 / OPPO / 一加 / realme 与通用骁龙 · 天玑机型<br>
+  60–185Hz 固定档位 · 原生 / 自适应动态刷新率 · 触控增强 · 玻璃拟态 WebUI
 </p>
 
 <p align="center">
@@ -22,52 +23,52 @@
   <a href="https://yingge-dev.github.io/global-hfr/">项目主页</a>
   &nbsp;·&nbsp;
   <a href="https://github.com/yingge-dev/global-hfr/releases/latest">Releases</a>
+  &nbsp;·&nbsp;
+  <a href="CHANGELOG.md">更新日志</a>
 </p>
 
 ---
 
-## 这是什么
+## v2.0.0 更新了什么
 
-**真·全局高刷** 是一个面向小米 / OPPO / 一加（含 realme）的 Root 模块，用三层机制实现真正的全局刷新率控制，并附带触控加速与玻璃拟态 WebUI。
+这次修的是动态刷新率的根因：
 
-它不是“只写一个 `peak_refresh_rate` 就自称全局”的模块。
+- **静态画面不降 60**：旧版只写 `peak_refresh_rate` / `min_refresh_rate`，HyperOS 还有独立的 secure `miui_refresh_rate` 在起作用；v2 同时写入三者，静止可以正常回到下限。
+- **切回动态仍被锁高刷**：`service call SurfaceFlinger 1035` 的底层锁会残留，v2 自动识别并切到自适应引擎，立即生效；手动切原生会明确提示重启，不再假装成功。
+- **60–165Hz 动态不可用**：部分 HyperOS 把 144 / 165Hz 当底层增强档，系统原生动态上限只有 120Hz；v2 的自适应引擎直接切底层模式，60 / 120 / 144 / 165 全档可用。
+- **WebUI 延迟大**：状态接口从每次 `dumpsys` 改为缓存文件 + shell 内置解析，实测 `status` 1.5s → 0.15s，切换 0.2–0.3s。
+- **按机型识别**：新增系统原生上限 `mLockedMaxRefreshRate`、厂商 / ROM / 面板档位识别；非小米机型走 `cmd display` / Settings 通用回退。
+- **更新提示**：模块管理器通过 `updateJson` 显示更新角标；新版 WebUI 打开时也会检查 GitHub，并展示更新日志。
 
-| 层级 | 手段 | 作用 |
+完整记录见 [CHANGELOG.md](CHANGELOG.md)。
+
+---
+
+## 两种动态刷新率
+
+| 引擎 | 行为 | 适合 |
 | --- | --- | --- |
-| ① 框架层 | `peak_refresh_rate` / `min_refresh_rate`，小米 / 澎湃额外写 `user_refresh_rate` | 设置刷新率上下限，兼容各家 ROM |
-| ② 底层锁 | `service call SurfaceFlinger 1035 <modeId>` | 调用 AOSP `setActiveModeFromBackdoor`，把显示模式钉死，并让后续 DisplayManager / 应用帧率请求失效 |
-| ③ 回读核验 | 读 `dumpsys display` 的实际刷新率与 active mode | 未达目标就重试；仍失败显示「待核验」，不假装成功 |
+| **原生** | 写回 `min` / `peak` / `miui_refresh_rate`，由系统按画面内容调度；静止 60，滑动升到系统允许的上限 | 日常省电，60–120Hz |
+| **自适应** | 模块读取电源活动：触控后切到上限，静止 3 秒切回下限；可绕过系统 120Hz 策略上限 | 想要 60–165Hz 动态、或从小米固定档切回来 |
 
-动态模式则相反：先解除底层锁，再把上下限交还 LTPO，让面板在区间内自适应。
+WebUI 里可选「自动 / 原生 / 自适应」，自动会按机型与实际系统上限选择。自适应每秒读取一次电源状态，耗电略高于原生。
+
+> 已知限制：部分 HyperOS 的 144 / 165Hz 属于底层增强档，系统原生动态最高 120Hz；需要 165Hz 动态请选「自适应」，需要全程锁死请选「全局最高」。
 
 ---
 
 ## 功能
 
-- **固定档位**：60 / 90 / 120 / 144 / 165 / 185Hz，自动扫描设备真实显示模式（含超频 DTBO）
-- **动态刷新**：60–120 / 60–144 / 60–165 / 30–120 / 10–120
+- **固定档位**：60 / 90 / 120 / 144 / 165 / 185Hz，自动扫描真实显示模式（含超频 DTBO）
+- **动态刷新**：60–120 / 60–144 / 60–165 / 120–165 / 90–165 / 30–120，多档可选
 - **底层锁帧**：SurfaceFlinger 1035 + 回读核验，压住应用帧率投票
 - **触控加速**：高通 `touchboost`、`input_boost`、MTK `fpsgo`、Adreno idler、触控 HAL 提权
 - **电竞模式**：额外 GPU 频率策略 + 调度 boost
-- **WebUI**：玻璃拟态，自动 / 浅色 / 深色；实时状态、节点列表、日志、扫描、恢复
-- **守护**：开机自启、息屏亮屏重锁、刷新率漂移检测
+- **WebUI**：玻璃拟态，自动 / 浅色 / 深色；实时状态、节点列表、日志、扫描、恢复、更新检查
+- **守护**：开机自启、息屏亮屏重锁、动态区间维持
 - **恢复**：所有触控节点写前备份，关闭或卸载逐项还原
 
 > 144 / 165 / 185Hz 需要屏幕或超频 DTBO 本身支持。不存在的档位 UI 会置灰，模块不会假装支持。
-
----
-
-## 截图
-
-| 封面 | 刷新率 |
-| --- | --- |
-| ![封面](screenshots/01_封面.png) | ![刷新率](screenshots/02_刷新率.png) |
-
-| 动态与触控 | WebUI 与安装 |
-| --- | --- |
-| ![触控](screenshots/03_触控.png) | ![WebUI](screenshots/04_WebUI.png) |
-
-> 截图为界面示意，实际效果以真机与 ROM 为准。
 
 ---
 
@@ -76,104 +77,40 @@
 1. 下载 [`global-hfr.zip`](docs/assets/global-hfr.zip)；
 2. 在 **Magisk / KernelSU / APatch** 管理器中选择「从本地安装」；
 3. 重启手机；
-4. 打开 WebUI 调整档位 / 动态区间 / 触控。
+4. 打开 WebUI 选择固定档位或动态区间 / 触控。
 
-**WebUI 入口**
-
-- KernelSU / APatch：模块卡片 → 打开 / WebUI
-- Magisk：安装 [KsuWebUI](https://github.com/5ec1cff/KsuWebUIStandalone) 之类的 WebUI 宿主，授予 Root 后打开
-
-> 不要与其他「高刷 / 刷新率 / LTPO / VRR / dfps / Astra」类模块同时启用，会互相抢显示策略。
-
-> GitHub Release 与自动更新使用 ASCII 的 `global-hfr.zip`（兼容性最好）；主页下载按钮通过 `download` 属性保存为 `真·全局高刷.zip`。
+首次开机会自动应用 `60Hz – 面板最高` 的原生 / 自适应动态；想全程满帧再切「全局最高」。
 
 ---
 
-## 兼容性
+## WebUI
 
-| 系统 | 支持情况 |
-| --- | --- |
-| 小米 / Redmi / POCO（HyperOS / MIUI） | ✅ 支持 |
-| OPPO / 一加 / realme（ColorOS / OxygenOS / realme UI） | ✅ 支持 |
-| Android 11 及以上 | ✅ 支持 |
-| Magisk / KernelSU / APatch | ✅ 支持 |
-| 其他品牌 | ⚠️ 通用接口可装，但未专门适配 |
+- KernelSU / APatch：模块页直接打开；
+- Magisk：安装 **KsuWebUI** 并授予 Root，再打开模块 WebUI；
+- 浏览器预览：直接打开 `webroot/index.html` 会显示演示数据，不会修改系统。
 
 ---
 
-## 常见问题
+## 兼容与风险
 
-**Q：为什么 144 / 165 / 185Hz 是灰的？**  
-模块只能锁定设备真实存在的显示模式。面板原生 120Hz 不会凭空出现 144/165/185；刷了超频 DTBO 并被扫描到，才会出现并标注 OC。
-
-**Q：显示「已锁定」但个别 App 还是 60Hz？**  
-先开「帧率浮窗」看系统实际输出。若浮窗是 120/165 但画面仍卡，是 App 自身渲染限制（如 24/30fps 视频），不是刷新率没锁。
-
-**Q：动态区间静止时掉到很低，正常吗？**  
-正常。把下限设为 10/30 时，LTPO 在静态画面会进入低刷新率省电；希望静止也保持 60，把下限设为 60。
-
-**Q：触控采样率会变高吗？**  
-模块不会修改触控 IC 固件，也不谎称提升采样率。240 / 480Hz 由厂商游戏助手按游戏会话控制；模块优化的是 input boost、触控 HAL 优先级、GPU 与调度策略，缩短「触摸 → 渲染 → 上屏」链路。
-
-**Q：耗电会不会变高？**  
-固定 165/185Hz 全程锁死必然更耗电。日常建议动态区间或 120Hz。
-
-**Q：出问题怎么恢复？**  
-WebUI → 设置 → 恢复系统默认；或在管理器卸载模块并重启。
+- 支持 Android 11+；小米 / Redmi / POCO、OPPO / 一加 / realme 优先适配，其他品牌走通用接口。
+- 与 dfps、Astra 等其他刷新率模块冲突，请只保留一个。
+- 修改系统显示策略存在兼容性风险；出现闪屏、黑屏或异常耗电，请点「恢复系统默认」并重启。
 
 ---
 
-## 项目结构
+## 目录
 
-```text
-.
-├── module/                 # 模块源码（module.prop / hfr.sh / WebUI）
-├── screenshots/            # 模块截图
-├── docs/                   # GitHub Pages 主页
-│   ├── index.html
-│   ├── style.css
-│   ├── app.js
-│   └── assets/             # 截图与下载包
-├── .github/workflows/      # 打 tag 自动发 Release
-├── RELEASE.md              # 发版流程
-├── release.ps1             # 一键发版脚本
-└── update.json             # 自动生成，无需手改
 ```
-
-## 本地打包
-
-```bash
-cd module
-zip -r ../global-hfr.zip .
+module/          模块本体（打包进 zip）
+  hfr.sh         核心引擎
+  customize.sh   安装脚本
+  service.sh     开机守护
+  webroot/       WebUI
+docs/            GitHub Pages 项目主页
+update.json      模块管理器更新清单
 ```
-
----
-
-## 发版（自动）
-
-详细步骤见 [RELEASE.md](RELEASE.md)，也可以直接运行 .
-elease.ps1 v1.2.3。
-
-1. 修改 `module/module.prop` 的 `version` 与 `versionCode`；
-2. 提交并推送 `main`；
-3. 打一个和 `version` 完全一致的 tag：
-
-```bash
-git tag v1.2.2
-git push origin v1.2.2
-```
-
-GitHub Actions 会自动打包、创建 Release、更新 `update.json` 和 `docs/assets/global-hfr.zip`，并触发 Pages 构建。之后已安装的旧版本会按 `versionCode` 检查更新。
-
-## 作者
-
-**颖哥** · Android 玩机 / 模块开发
-
-- 项目主页：`https://yingge-dev.github.io/global-hfr/`
-- GitHub：`https://github.com/yingge-dev`
 
 ## License
 
-[MIT](LICENSE) © 2026 颖哥
-
-> 非官方模块，与小米 / OPPO / 一加无隶属关系。刷机有风险，请先备份并确保具备救砖能力。
+MIT © 颖哥

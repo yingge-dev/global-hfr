@@ -1,7 +1,7 @@
 id=global_hfr
 name=真·全局高刷
-version=v1.3.0
-versionCode=10300
+version=v2.0.0
+versionCode=20000
 author=颖哥
-description=真·全局高刷 · 小米 / OPPO / 一加 全平台 · 60/120/144/165/185Hz 与动态刷新率 · 触控增强 · WebUI 控制
+description=真·全局高刷 · 小米/OPPO/一加/realme 与通用骁龙/天玑机型 · 60–185Hz 档位锁定 · 原生/自适应动态刷新率 · 触控增强 · WebUI 控制
 updateJson=https://raw.githubusercontent.com/yingge-dev/global-hfr/main/update.json

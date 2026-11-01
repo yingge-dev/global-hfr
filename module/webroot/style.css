@@ -561,3 +561,23 @@ main{position:relative;z-index:1;width:min(560px,100%);margin:0 auto;padding:6px
   *{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important}
 }
 ::selection{background:rgba(10,132,255,.28)}
+
+/* ===== v2 update banner ===== */
+.update-bar{display:flex;align-items:center;gap:11px;width:calc(100% - 32px);margin:0 16px 14px;padding:12px 14px;border-radius:16px;border:1px solid var(--hairline);background:var(--card-strong);box-shadow:var(--shadow-float);color:var(--text);text-align:left;font-family:var(--font);cursor:pointer}
+.update-bar[hidden]{display:none}
+.ub-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 4px var(--green-soft);flex:0 0 auto}
+.ub-txt{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
+.ub-txt b{font-size:12.5px}
+.ub-txt b i{font-style:normal;color:var(--blue)}
+.ub-txt em{font-size:10.5px;color:var(--text-3);font-style:normal;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.update-bar svg{width:16px;height:16px;stroke:var(--text-3);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
+
+/* ===== v2 dynamic engine ===== */
+.dyn-engine{margin-top:16px;padding-top:14px;border-top:1px solid var(--hairline)}
+.engine-h{display:flex;align-items:center;justify-content:space-between}
+.engine-h b{font-size:12.5px}
+.engine-h span{font-size:10px;color:var(--text-3)}
+.idle-row{margin-top:10px;justify-content:flex-start}
+.idle-row .sel{flex:0 0 auto;min-width:150px}
+.changelog{margin-top:12px;font-size:12px;line-height:1.85;color:var(--text-2);word-break:break-word}
+.changelog b{color:var(--text);font-weight:700}
