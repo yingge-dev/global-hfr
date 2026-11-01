@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#eef3fa" id="themeColor">
-<meta name="description" content="真·全局高刷 v2.2.0：小米 / OPPO / 一加 / realme 与通用机型，能力自检 + 多级回退，60–185Hz 固定档位，原生 / 自适应动态刷新率，触控加速与玻璃拟态 WebUI。">
+<meta name="description" content="真·全局高刷 v2.2.1：小米 / OPPO / 一加 / realme 与通用机型，能力自检 + 多级回退，60–185Hz 固定档位，原生 / 自适应动态刷新率，触控加速与玻璃拟态 WebUI。">
 <title>真·全局高刷 · 小米 / OPPO / 一加全平台</title>
 <link rel="stylesheet" href="style.css">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop stop-color='%230a84ff'/%3E%3Cstop offset='1' stop-color='%23af52de'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='18' fill='url(%23g)'/%3E%3Ctext x='32' y='44' font-size='34' text-anchor='middle' fill='white' font-family='sans-serif'%3E颖%3C/text%3E%3C/svg%3E">
@@ -41,16 +41,16 @@
 <main id="top">
   <div class="release-bar" id="releaseBar">
     <span class="rb-dot"></span>
-    <div><b id="releaseTitle">v2.2.0 已发布</b><em id="releaseDesc">动态下限支持 30Hz，按面板自动识别</em></div>
+    <div><b id="releaseTitle">v2.2.1 已发布</b><em id="releaseDesc">清理无效功能，固定档回读核验</em></div>
     <a href="#changelog">更新内容 →</a>
   </div>
   <section class="hero">
     <div class="hero-copy">
-      <span class="eyebrow"><i></i> v2.2.0 · Android 11+ · Magisk / KernelSU / APatch</span>
+      <span class="eyebrow"><i></i> v2.2.1 · Android 11+ · Magisk / KernelSU / APatch</span>
       <h1>把高刷，<br><span>锁进系统底层。</span></h1>
-      <p class="lead">真·全局高刷 v2.2.0。动态下限支持 30 / 60 / 90Hz，按面板上报自动识别；能力自检 + 多级回退，按机型选择可用的锁帧 / 动态接口；60–185Hz 固定档位，原生 / 自适应双动态引擎，静止降下限、触控回峰值。不是只写一个 <code>settings</code> 就自称全局。</p>
+      <p class="lead">真·全局高刷 v2.2.1。动态下限支持 30 / 60 / 90Hz，按面板上报自动识别；能力自检 + 多级回退，按机型选择可用的锁帧 / 动态接口；60–185Hz 固定档位，原生 / 自适应双动态引擎，静止降下限、触控回峰值。不是只写一个 <code>settings</code> 就自称全局。</p>
       <div class="cta">
-        <a class="btn blue" href="assets/global-hfr.zip?v=2.2.0" download="真·全局高刷.zip">
+        <a class="btn blue" href="assets/global-hfr.zip?v=2.2.1" download="真·全局高刷.zip">
           <svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></svg>
           下载模块
         </a>
@@ -167,16 +167,39 @@
       <div class="step card reveal"><b>03</b><h3>打开 WebUI</h3><p>KernelSU / APatch 模块页直接开；Magisk 安装 KsuWebUI 并授予 Root。</p></div>
     </div>
     <div class="install-cta reveal">
-      <a class="btn blue big" href="assets/global-hfr.zip?v=2.2.0" download="真·全局高刷.zip">下载 真·全局高刷.zip</a>
-      <span>Android 11+ · 约 42 KB · v2.2.0</span>
+      <a class="btn blue big" href="assets/global-hfr.zip?v=2.2.1" download="真·全局高刷.zip">下载 真·全局高刷.zip</a>
+      <span>Android 11+ · 约 41 KB · v2.2.1</span>
     </div>
   </section>
 
   <section class="section" id="changelog">
     <div class="sec-head reveal">
       <span class="eyebrow"><i></i> CHANGELOG</span>
-      <h2>v2.2.0<br>动态下限更细。</h2>
-      <p>30Hz 不是每块面板都支持：v2.2 按系统真实上报的档位生成下限，支持才显示，不支持不硬写。</p>
+      <h2>v2.2.1<br>清理与核验。</h2>
+      <p>删掉无法回读的触控采样率写入，固定档加回读核验，深度锁帧按能力显示；能用的留下，不能用的明确隐藏。</p>
+    </div>
+    <div class="lock-card card reveal" style="margin-bottom:20px">
+      <div class="lock-row">
+        <span class="num">01</span>
+        <div><b>删除无效的触控采样率写入</b><p>部分机型节点只可写、不可回读，无法确认是否生效；v2.2.1 移除该功能，不再把“写入成功”当成“采样率已提升”。</p></div>
+      </div>
+      <div class="lock-row">
+        <span class="num">02</span>
+        <div><b>固定档加回读核验</b><p>小米底层锁也会回读实际刷新率，确认不到就显示「未确认」，不再默认成功。</p></div>
+      </div>
+      <div class="lock-row">
+        <span class="num">03</span>
+        <div><b>深度锁帧按能力显示</b><p>没有 SurfaceFlinger 底层锁的机型隐藏该开关，避免无效选项。</p></div>
+      </div>
+      <div class="lock-row">
+        <span class="num">04</span>
+        <div><b>清理残留配置</b><p>移除 sampling 配置、状态字段与切换入口；旧配置文件里的旧键会被忽略。</p></div>
+      </div>
+      <p class="lock-note">v2.2.1 不改变 30 / 60 / 90 下限识别逻辑；只做真实性清理与固定档核验。</p>
+    </div>
+    <div class="sec-head reveal" style="padding-top:6px">
+      <span class="eyebrow">v2.2.0</span>
+      <h2 style="font-size:24px">动态下限细化</h2>
     </div>
     <div class="lock-card card reveal" style="margin-bottom:20px">
       <div class="lock-row">
@@ -279,7 +302,7 @@
       <h2>真·全局高刷</h2>
       <p>小米 / OPPO / 一加全平台 · 60–185Hz · 动态刷新 · 触控增强</p>
       <div class="cta center">
-        <a class="btn blue" href="assets/global-hfr.zip?v=2.2.0" download="真·全局高刷.zip">下载模块</a>
+        <a class="btn blue" href="assets/global-hfr.zip?v=2.2.1" download="真·全局高刷.zip">下载模块</a>
         <a class="btn glass" data-repo href="https://github.com/yingge-dev/global-hfr" target="_blank" rel="noopener">GitHub</a>
       </div>
       <p class="tiny">作者：颖哥 · MIT License · 刷机有风险，请先备份</p>

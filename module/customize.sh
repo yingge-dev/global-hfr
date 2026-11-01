@@ -103,7 +103,10 @@ fi
 set_perm "$DATA/config.conf" 0 0 0644
 
 # 清理上一版遗留的临时状态
-rm -f "$DATA/sf_override" "$DATA/state.conf" "$DATA/live.conf" "$DATA/device.conf" 2>/dev/null
+rm -f "$DATA/sf_override" "$DATA/state.conf" "$DATA/live.conf" "$DATA/device.conf" "$DATA/sampling.backup" 2>/dev/null
+if [ -f "$DATA/config.conf" ] && grep -q '^sampling=' "$DATA/config.conf" 2>/dev/null; then
+    sed -i '/^sampling=/d' "$DATA/config.conf" 2>/dev/null
+fi
 
 # ---------- 安装时预扫描 ----------
 ui_print "- 正在扫描显示档位…"

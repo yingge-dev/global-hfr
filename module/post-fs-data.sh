@@ -10,7 +10,11 @@ if [ ! -f "$DATA/config.conf" ] && [ -f "$MODDIR/config/default.conf" ]; then
 fi
 
 # SurfaceFlinger 在开机时是全新进程，旧的底层锁帧标记已失效
-rm -f "$DATA/sf_override" "$DATA/state.conf" 2>/dev/null
+rm -f "$DATA/sf_override" "$DATA/state.conf" "$DATA/live.conf" "$DATA/sampling.backup" 2>/dev/null
+# 清理 v2.2.1 之前遗留的无效采样率配置
+if [ -f "$DATA/config.conf" ] && grep -q '^sampling=' "$DATA/config.conf" 2>/dev/null; then
+    sed -i '/^sampling=/d' "$DATA/config.conf" 2>/dev/null
+fi
 
 # 欧加系 LTPO 兼容属性（可选，默认关闭）
 if grep -q '^oplus_props=1' "$DATA/config.conf" 2>/dev/null; then

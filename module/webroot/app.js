@@ -497,6 +497,8 @@
   }
 
   function renderSettings(d, c) {
+    var caps = state.caps || {};
+    $('#rowDeep').hidden = Number(caps.can_sf) !== 1;
     $('#swDeep').checked = Number(c.deep_lock) === 1;
     $('#swOverlay').checked = Number(c.overlay) === 1;
     $('#swBoot').checked = Number(c.auto_boot) === 1;
@@ -515,7 +517,6 @@
       if (px > bestPx) { bestPx = px; res = m.w + ' × ' + m.h; }
     });
     var platform = platformText(d.platform);
-    var caps = state.caps || {};
     var capText = [];
     if (Number(caps.can_sf) === 1) capText.push('底层锁');
     if (Number(caps.can_cmd) === 1) capText.push('DisplayManager');

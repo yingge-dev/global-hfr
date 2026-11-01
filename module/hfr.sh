@@ -50,8 +50,8 @@ if [ -f "$MODDIR/module.prop" ]; then
         esac
     done < "$MODDIR/module.prop"
 fi
-[ -n "$VER" ] || VER=v2.2.0
-is_num "$VC" || VC=20200
+[ -n "$VER" ] || VER=v2.2.1
+is_num "$VC" || VC=20201
 
 [ -d "$DATA" ] || mkdir -p "$DATA" 2>/dev/null
 
@@ -114,15 +114,12 @@ overlay=0
 daemon=1
 auto_boot=1
 oplus_props=0
-sampling=0
 
 target_hz=0
 verified=0
 method=""
 engine=""
 touch_applied=0
-sampling_applied=0
-sampling_method=""
 restart_required=0
 
 FAMILY_CACHE=""
@@ -135,7 +132,7 @@ load_conf() {
     profile=fixed; fixed_hz=0; dyn_min=60; dyn_max=0
     dyn_engine=auto; dyn_idle_ms=3000
     touch=1; touch_level=standard; deep_lock=1; overlay=0
-    daemon=1; auto_boot=1; oplus_props=0; sampling=0
+    daemon=1; auto_boot=1; oplus_props=0
     [ -f "$CONF" ] || return 0
     while IFS='=' read -r k v; do
         v=${v// /}
@@ -155,7 +152,6 @@ load_conf() {
             daemon) case "$v" in 0|1) daemon=$v ;; esac ;;
             auto_boot) case "$v" in 0|1) auto_boot=$v ;; esac ;;
             oplus_props) case "$v" in 0|1) oplus_props=$v ;; esac ;;
-            sampling) case "$v" in 0|120|240|360|480) sampling=$v ;; esac ;;
         esac
     done < "$CONF"
 }
@@ -178,7 +174,6 @@ set_conf() {
         dyn_engine) case "$v" in auto|native|adaptive) ;; *) return 2 ;; esac ;;
         dyn_idle_ms) is_num "$v" && [ "$v" -ge 1000 ] 2>/dev/null || return 2 ;;
         touch|deep_lock|overlay|daemon|auto_boot|oplus_props) case "$v" in 0|1) ;; *) return 2 ;; esac ;;
-        sampling) case "$v" in 0|120|240|360|480) ;; *) return 2 ;; esac ;;
         touch_level) case "$v" in standard|esports) ;; *) return 2 ;; esac ;;
         *) return 2 ;;
     esac
@@ -673,9 +668,16 @@ apply_fixed_mode() {
     # Xiaomi / HyperOS: the vendor backdoor is the only reliable hard lock.
     if [ "$deep_lock" = "1" ] && [ "$CAN_SF" = "1" ]; then
         if sf_set "$mid"; then
-            method="SurfaceFlinger mode $mid"
             : > "$SFLAG" 2>/dev/null
-            verified=1
+            sleep 0.35
+            cc=$(read_active_hz)
+            if [ -n "$cc" ] && [ $((cc - mhz)) -le 2 ] 2>/dev/null && [ $((mhz - cc)) -le 2 ] 2>/dev/null; then
+                method="SurfaceFlinger mode $mid"
+                verified=1
+            else
+                method="SurfaceFlinger mode $mid（未确认）"
+                verified=0
+            fi
             return 0
         fi
     fi
@@ -696,9 +698,16 @@ apply_fixed_mode() {
     # Last vendor fallback, only when capability is known.
     if [ "$deep_lock" = "1" ] && [ "$CAN_SF" = "1" ]; then
         if sf_set "$mid"; then
-            method="SurfaceFlinger mode $mid"
             : > "$SFLAG" 2>/dev/null
-            verified=1
+            sleep 0.35
+            cc=$(read_active_hz)
+            if [ -n "$cc" ] && [ $((cc - mhz)) -le 2 ] 2>/dev/null && [ $((mhz - cc)) -le 2 ] 2>/dev/null; then
+                method="SurfaceFlinger mode $mid"
+                verified=1
+            else
+                method="SurfaceFlinger mode $mid（未确认）"
+                verified=0
+            fi
             return 0
         fi
     fi
@@ -851,56 +860,6 @@ mtk_fpsgo|/sys/kernel/fpsgo/common/force_onoff|1|0
 x_gpu_gov|/sys/class/kgsl/kgsl-3d0/devfreq/governor|performance|
 x_sched_boost|/proc/sys/kernel/sched_boost|1|0"
 
-SAMPLINGBAK=$DATA/sampling.backup
-SAMPLING_NODES="/sys/class/touch/touch_dev/touch_thp_ic_cmd /sys/class/touch/touch_dev/touch_ic_cmd"
-
-sampling_node() {
-    for p in $SAMPLING_NODES; do
-        [ -e "$p" ] && { echo "$p"; return 0; }
-    done
-    return 1
-}
-
-apply_sampling() {
-    sampling_applied=0
-    sampling_method=""
-    case "$sampling" in
-        0|'') return 0 ;;
-    esac
-    node=$(sampling_node)
-    [ -n "$node" ] || return 1
-    if [ ! -f "$SAMPLINGBAK" ]; then
-        v=$(cat "$node" 2>/dev/null | tr -d '\r\n')
-        printf '%s\t%s\n' "$node" "$v" > "$SAMPLINGBAK" 2>/dev/null
-    fi
-    if printf '%s' "8 3007 $sampling 1" > "$node" 2>/dev/null; then
-        sampling_applied=1
-        sampling_method="thp $sampling"
-        log "sampling ${sampling}Hz -> $node"
-        return 0
-    fi
-    log "sampling write failed -> $node"
-    return 1
-}
-
-restore_sampling() {
-    node=$(sampling_node)
-    if [ -f "$SAMPLINGBAK" ]; then
-        while IFS=$TAB read -r p v; do
-            [ -n "$p" ] || continue
-            if [ -n "$v" ]; then
-                printf '%s' "$v" > "$p" 2>/dev/null
-            elif [ -n "$node" ]; then
-                printf '%s' "8 3007 120 1" > "$node" 2>/dev/null
-            fi
-            break
-        done < "$SAMPLINGBAK"
-        rm -f "$SAMPLINGBAK"
-    fi
-    sampling_applied=0
-    sampling_method=""
-}
-
 backup_touch_node() {
     p=$1
     [ -f "$TOUCHBAK" ] || : > "$TOUCHBAK"
@@ -933,7 +892,6 @@ renice_touch() {
 }
 
 restore_touch() {
-    restore_sampling
     if [ -f "$TOUCHBAK" ]; then
         while IFS=$TAB read -r p v; do
             [ -n "$p" ] || continue
@@ -990,9 +948,7 @@ EOF
             jfirst=0
             printf '{"name":"renice","path":"touch HAL","exists":1,"ok":1}' >> "$TOUCHJSON.tmp"
         fi
-        apply_sampling
-        [ "$sampling_applied" = "1" ] && touch_applied=$((touch_applied + 1))
-        log "touch level=$touch_level applied=$touch_applied renice=$n sampling=$sampling"
+        log "touch level=$touch_level applied=$touch_applied renice=$n"
     fi
     mv -f "$TOUCHJSON.tmp" "$TOUCHJSON" 2>/dev/null
 }
@@ -1012,15 +968,13 @@ write_state() {
         echo "verified=$verified"
         echo "method=$method"
         echo "touch_applied=$touch_applied"
-        echo "sampling_applied=$sampling_applied"
-        echo "sampling_method=$sampling_method"
         echo "restart_required=$restart_required"
     } > "$STATE.tmp" 2>/dev/null && mv -f "$STATE.tmp" "$STATE" 2>/dev/null
 }
 
 read_state() {
     st_ts=0; st_profile=""; st_engine=""; st_target=0; st_cur=0
-    st_ver=0; st_method=""; st_touch=0; st_sampling=0; st_restart=0
+    st_ver=0; st_method=""; st_touch=0; st_restart=0
     [ -f "$STATE" ] || return 0
     while IFS='=' read -r k v; do
         case "$k" in
@@ -1032,7 +986,6 @@ read_state() {
             verified) is_num "$v" && st_ver=$v ;;
             method) st_method=$v ;;
             touch_applied) is_num "$v" && st_touch=$v ;;
-            sampling_applied) is_num "$v" && st_sampling=$v ;;
             restart_required) is_num "$v" && st_restart=$v ;;
         esac
     done < "$STATE"
@@ -1042,7 +995,7 @@ apply_all() {
     ensure_modes
     restart_required=0
     apply_display
-    t_sig="$touch|$touch_level|$sampling"
+    t_sig="$touch|$touch_level"
     if [ -s "$TOUCHSTATE" ] && [ -s "$TOUCHJSON" ] && [ "$(cat "$TOUCHSIG" 2>/dev/null)" = "$t_sig" ]; then
         touch_applied=0
         while IFS='|' read -r _tn _tp _tok _tv; do
@@ -1162,19 +1115,11 @@ json_status() {
     [ "$CAN_SF" = "1" ] && [ "$d_family" = "xiaomi" ] && adapt_kind="sf"
     printf '"caps":{"can_sf":%s,"can_cmd":%s,"adapt":"%s","keys":"%s"},' "$CAN_SF" "$CAN_CMD" "$adapt_kind" "$VENDOR_KEYS"
 
-    printf '"config":{"profile":"%s","fixed_hz":%s,"dyn_min":%s,"dyn_max":%s,"dyn_engine":"%s","dyn_idle_ms":%s,"touch":%s,"touch_level":"%s","sampling":%s,"deep_lock":%s,"overlay":%s,"daemon":%s,"auto_boot":%s,"oplus_props":%s},' \
-        "$profile" "$fixed_hz" "$dyn_min" "$dyn_max" "$dyn_engine" "$dyn_idle_ms" "$touch" "$touch_level" "$sampling" "$deep_lock" "$overlay" "$daemon" "$auto_boot" "$oplus_props"
+    printf '"config":{"profile":"%s","fixed_hz":%s,"dyn_min":%s,"dyn_max":%s,"dyn_engine":"%s","dyn_idle_ms":%s,"touch":%s,"touch_level":"%s","deep_lock":%s,"overlay":%s,"daemon":%s,"auto_boot":%s,"oplus_props":%s},' \
+        "$profile" "$fixed_hz" "$dyn_min" "$dyn_max" "$dyn_engine" "$dyn_idle_ms" "$touch" "$touch_level" "$deep_lock" "$overlay" "$daemon" "$auto_boot" "$oplus_props"
 
     printf '"live":{"current":%s,"target":%s,"verified":%s,"method":"%s","engine":"%s","updated":%s,"restart_required":%s},' \
         "$cur" "$st_target" "$st_ver" "$st_method" "$st_engine" "$st_ts" "$st_restart"
-
-    sampling_node_path=""
-    for p in $SAMPLING_NODES; do
-        [ -e "$p" ] && { sampling_node_path=$p; break; }
-    done
-    sampling_exists=0
-    [ -n "$sampling_node_path" ] && sampling_exists=1
-    printf '"sampling":{"value":%s,"exists":%s,"applied":%s,"path":"%s"},' "$sampling" "$sampling_exists" "$st_sampling" "$sampling_node_path"
 
     printf '"touch":{"enabled":%s,"level":"%s","applied":%s,"nodes":[' "$touch" "$touch_level" "$st_touch"
     cat "$TOUCHJSON" 2>/dev/null
@@ -1183,8 +1128,8 @@ json_status() {
 
 apply_json() {
     m=${method//\"/}; m=${m//\\/}
-    printf '{"ok":1,"profile":"%s","engine":"%s","target":%s,"current":%s,"verified":%s,"method":"%s","touch_applied":%s,"sampling":%s,"sampling_applied":%s,"restart_required":%s}\n' \
-        "$profile" "$engine" "${target_hz:-0}" "${target_hz:-0}" "${verified:-0}" "$m" "${touch_applied:-0}" "$sampling" "$sampling_applied" "${restart_required:-0}"
+    printf '{"ok":1,"profile":"%s","engine":"%s","target":%s,"current":%s,"verified":%s,"method":"%s","touch_applied":%s,"restart_required":%s}\n' \
+        "$profile" "$engine" "${target_hz:-0}" "${target_hz:-0}" "${verified:-0}" "$m" "${touch_applied:-0}" "${restart_required:-0}"
 }
 
 cmd_brief() {
@@ -1469,10 +1414,6 @@ case "$cmd" in
                 fi
                 ;;
             off) set_conf profile off ;;
-            sampling)
-                case "$3" in 0|120|240|360|480) ;; *) printf '{"ok":0}\n'; exit 2 ;; esac
-                set_conf sampling "$3"
-                ;;
             touch)
                 case "$3" in 0|1) ;; *) printf '{"ok":0}\n'; exit 2 ;; esac
                 set_conf touch "$3"
