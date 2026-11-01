@@ -77,8 +77,8 @@
   var DEMO = {
     ok: 1,
     ts: Math.floor(Date.now() / 1000),
-    version: 'v2.0.0',
-    versionCode: 20000,
+    version: 'v2.2.0',
+    versionCode: 20200,
     device: {
       brand: 'OnePlus', model: 'PJZ110', market: 'OnePlus 13',
       rom: 'ColorOS 15.0.1', android: '15', sdk: 35,
@@ -244,8 +244,8 @@
     var verified = Number(l.verified) === 1;
 
     var vt = $('#verText');
-    if (vt) vt.textContent = state.version || 'v2.0.0';
-    $('#aboutVer').textContent = state.version || 'v2.0.0';
+    if (vt) vt.textContent = state.version || 'v2.2.0';
+    $('#aboutVer').textContent = state.version || 'v2.2.0';
     $('#devName').textContent = demo ? '预览模式' : (d.market || d.model || '未知设备');
     var dot = $('#devDot');
     dot.className = 'dot' + (demo ? '' : (verified ? ' on' : ' err'));
@@ -337,12 +337,21 @@
     var l = (state && state.live) || {};
     var panelMax = max || (avail.length ? avail[avail.length - 1] : 120);
     var nativeMax = Number((state && state.panel && state.panel.nativeMax) || 0) || panelMax;
-    var mins = [10, 30, 48, 60].concat(avail).filter(function (v, i, a) {
-      return v <= panelMax && a.indexOf(v) === i;
-    }).sort(function (a, b) { return a - b; });
-    var maxs = avail.length ? avail.filter(function (v) { return v <= panelMax + 2; }) : [60, 90, 120];
-    if (maxs.indexOf(panelMax) < 0) maxs.push(panelMax);
-    maxs.sort(function (a, b) { return a - b; });
+    var rates = ((state && state.panel && state.panel.rates) || []).map(function (v) { return Math.round(Number(v)); })
+      .filter(function (v) { return v > 0; });
+    if (!rates.length) rates = avail.slice();
+    if (!rates.length) rates = [60, 90, 120, 144, 165];
+    var uniq = {};
+    rates = rates.filter(function (v) { if (uniq[v]) return false; uniq[v] = 1; return true; })
+      .filter(function (v) { return v <= panelMax + 2; }).sort(function (a, b) { return a - b; });
+    if (rates.indexOf(panelMax) < 0) rates.push(panelMax);
+    rates.sort(function (a, b) { return a - b; });
+
+    var mins = rates.filter(function (v) { return v <= panelMax; });
+    if (mins.indexOf(60) < 0 && panelMax >= 60) { mins.push(60); mins.sort(function (a, b) { return a - b; }); }
+    if (mins.length < 2 && panelMax > mins[0]) mins.push(panelMax);
+    var maxs = rates.filter(function (v) { return v <= panelMax + 2; });
+    if (maxs.length < 2) maxs = [Math.min(60, panelMax), panelMax];
 
     minEl.innerHTML = mins.map(function (v) {
       return '<option value="' + v + '">' + v + ' Hz' + (v <= 30 ? ' · LTPO' : '') + '</option>';
@@ -368,24 +377,26 @@
 
     var pairs = [];
     var seen = {};
+    function hasRate(v) { return maxs.indexOf(v) >= 0; }
     function addPair(a, b) {
       a = Math.round(Number(a)); b = Math.round(Number(b));
       if (!a || !b || b <= a || b > panelMax + 2 || a < floor) return;
+      if (mins.indexOf(a) < 0 || !hasRate(b)) return;
       var key = a + '-' + b;
       if (seen[key]) return;
       seen[key] = 1;
       pairs.push([a, b]);
     }
-    addPair(60, panelMax);
+    if (mins.indexOf(30) >= 0) {
+      [60, 90, 120, 144, 165, 185].forEach(function (b) { addPair(30, b); });
+    }
     addPair(60, 120);
-    addPair(60, 144);
     addPair(60, 165);
-    addPair(120, panelMax);
+    addPair(90, 120);
+    addPair(90, 165);
     addPair(120, 165);
-    addPair(90, panelMax);
-    addPair(30, 120);
-    pairs.sort(function (a, b) { return (a[1] - b[1]) || (a[0] - b[0]); });
     if (!pairs.length) pairs = [[Math.min(60, floor), panelMax]];
+    pairs.sort(function (a, b) { return (a[0] - b[0]) || (a[1] - b[1]); });
 
     $('#dynPresets').innerHTML = pairs.map(function (pr) {
       var on = c.profile === 'dynamic' && Number(c.dyn_min) === pr[0] && Number(c.dyn_max) === pr[1];
@@ -934,12 +945,14 @@
       var cd = Number(j.can_cmd) === 1 ? '支持（cmd display）' : '不支持';
       var rec = j.recommend === 'adaptive' ? '自适应动态（可跑满面板）' : '原生动态（系统内容调度）';
       var keys = j.keys ? String(j.keys).replace(/:/g, ' / ') : '标准 peak / min';
+      var rates = j.rates ? String(j.rates).split(',').join(' / ') + ' Hz' : '--';
       var rows = [
         ['厂商族', j.family || '--'],
         ['底层锁', sf],
         ['DisplayManager', cd],
         ['面板最高', (j.panelMax || '--') + ' Hz'],
         ['系统原生上限', (j.nativeMax || '--') + ' Hz'],
+        ['支持速率', rates],
         ['推荐动态', rec],
         ['当前实际', (j.active || '--') + ' Hz'],
         ['厂商刷新率键', keys]

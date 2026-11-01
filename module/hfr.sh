@@ -50,8 +50,8 @@ if [ -f "$MODDIR/module.prop" ]; then
         esac
     done < "$MODDIR/module.prop"
 fi
-[ -n "$VER" ] || VER=v2.1.0
-is_num "$VC" || VC=20100
+[ -n "$VER" ] || VER=v2.2.0
+is_num "$VC" || VC=20200
 
 [ -d "$DATA" ] || mkdir -p "$DATA" 2>/dev/null
 
@@ -430,8 +430,9 @@ scan_modes() {
         is_num "$nm" || nm=0
         [ "$nm" -le 60 ] 2>/dev/null && nm=$mx
         [ "$nm" -gt "$mx" ] 2>/dev/null && nm=$mx
-        printf 'max=%s\nnative=%s\n' "${mx:-0}" "${nm:-$mx}" > "$PANEL" 2>/dev/null
-        log "scan modes: $(wc -l < "$MODES") native=${nm:-$mx}"
+        rts=$(detect_rates)
+        printf 'max=%s\nnative=%s\nrates=%s\n' "${mx:-0}" "${nm:-$mx}" "${rts}" > "$PANEL" 2>/dev/null
+        log "scan modes: $(wc -l < "$MODES") native=${nm:-$mx} rates=$rts"
         return 0
     fi
     rm -f "$MODES.tmp"
@@ -439,25 +440,16 @@ scan_modes() {
 }
 
 ensure_panel() {
+    [ -s "$MODES" ] || return 1
     if [ -f "$PANEL" ]; then
-        has_native=0
+        has_native=0; has_rates=0
         while IFS='=' read -r k v; do
             [ "$k" = "native" ] && has_native=1
+            [ "$k" = "rates" ] && has_rates=1
         done < "$PANEL"
-        if [ "$has_native" = "0" ] && [ -s "$MODES" ]; then
-            nm=$(dumpsys display 2>/dev/null | sed -n 's/.*mLockedMaxRefreshRate: \([0-9.]*\).*/\1/p' | head -n 1)
-            nm=${nm%%.*}
-            is_num "$nm" || nm=0
-            mx=$(awk -F'\t' 'BEGIN{m=0} {if ($4+0 > m) m=$4+0} END{if (m>0) printf "%.0f", m}' "$MODES" 2>/dev/null)
-            [ "$nm" -le 60 ] 2>/dev/null && nm=$mx
-            [ "$nm" -gt "$mx" ] 2>/dev/null && nm=$mx
-            echo "native=${nm:-$mx}" >> "$PANEL" 2>/dev/null
-        fi
-        return 0
+        [ "$has_native" = "1" ] && [ "$has_rates" = "1" ] && return 0
     fi
-    [ -s "$MODES" ] || return 1
-    mx=$(awk -F'\t' 'BEGIN{m=0} {if ($4+0 > m) m=$4+0} END{if (m>0) printf "%.0f", m}' "$MODES" 2>/dev/null)
-    printf 'max=%s\nnative=%s\n' "${mx:-0}" "${mx:-0}" > "$PANEL" 2>/dev/null
+    refresh_native_cap
 }
 
 ensure_modes() {
@@ -491,6 +483,57 @@ native_max() {
     max_hz
 }
 
+panel_rates() {
+    if [ -f "$PANEL" ]; then
+        while IFS='=' read -r k v; do
+            if [ "$k" = "rates" ] && [ -n "$v" ]; then
+                printf '%s\n' "$v"
+                return 0
+            fi
+        done < "$PANEL"
+    fi
+    [ -s "$MODES" ] || return 1
+    awk -F'\t' '{printf "%.0f\n", $4}' "$MODES" 2>/dev/null | sort -n | awk '!seen[$1]++ { if (out != "") out = out ","; out = out $1 } END { if (out != "") print out }'
+}
+
+nearest_rate() {
+    want=$1
+    rates=$(panel_rates)
+    if [ -z "$rates" ]; then
+        printf '%s\n' "$want"
+        return 0
+    fi
+    awk -v w="$want" -v s="$rates" '
+        BEGIN {
+            n = split(s, a, ","); best = a[1]; bd = -1
+            for (i = 1; i <= n; i++) {
+                d = a[i] - w; if (d < 0) d = -d
+                if (bd < 0 || d < bd) { bd = d; best = a[i] }
+            }
+            printf "%.0f\n", best
+        }'
+}
+
+detect_rates() {
+    rts=$(dumpsys display 2>/dev/null | awk '
+        /supportedRefreshRates \[/ {
+            s = $0
+            sub(/.*supportedRefreshRates \[/, "", s)
+            sub(/\].*/, "", s)
+            n = split(s, a, ",")
+            for (i = 1; i <= n; i++) {
+                gsub(/[^0-9.]/, "", a[i])
+                f = a[i] + 0
+                if (f >= 1 && f <= 400) printf "%.0f\n", f
+            }
+            exit
+        }' | sort -n | awk '!seen[$1]++ { if (out != "") out = out ","; out = out $1 } END { if (out != "") print out }')
+    if [ -z "$rts" ] && [ -s "$MODES" ]; then
+        rts=$(awk -F'\t' '{printf "%.0f\n", $4}' "$MODES" 2>/dev/null | sort -n | awk '!seen[$1]++ { if (out != "") out = out ","; out = out $1 } END { if (out != "") print out }')
+    fi
+    printf '%s\n' "$rts"
+}
+
 refresh_native_cap() {
     [ -s "$MODES" ] || return 1
     mx=$(max_hz); [ -n "$mx" ] || return 1
@@ -499,7 +542,9 @@ refresh_native_cap() {
     is_num "$nm" || nm=0
     [ "$nm" -le 60 ] 2>/dev/null && nm=$mx
     [ "$nm" -gt "$mx" ] 2>/dev/null && nm=$mx
-    printf 'max=%s\nnative=%s\n' "$mx" "${nm:-$mx}" > "$PANEL" 2>/dev/null
+    rts=$(detect_rates)
+    [ -n "$rts" ] || rts=$(panel_rates)
+    printf 'max=%s\nnative=%s\nrates=%s\n' "$mx" "${nm:-$mx}" "$rts" > "$PANEL" 2>/dev/null
 }
 
 pick_mode() {
@@ -679,15 +724,21 @@ apply_dynamic_mode() {
     if ! is_num "$hi" || [ "$hi" -eq 0 ]; then hi=$pmax; fi
     [ "$hi" -gt "$pmax" ] && hi=$pmax
     [ "$hi" -le "$lo" ] && hi=$((lo + 30))
-    set -- $(pick_mode "$lo"); lo_id=$1; lo_hz=$2
-    set -- $(pick_mode "$hi"); hi_id=$1; hi_hz=$2
-    [ -n "$lo_id" ] || lo_id=$hi_id
-    [ -n "$lo_hz" ] || lo_hz=$lo
-    if [ -z "$hi_id" ]; then
-        method="未检测到 ${hi}Hz 档位"
+    lo=$(nearest_rate "$lo")
+    hi=$(nearest_rate "$hi")
+    is_num "$lo" || lo=60
+    is_num "$hi" || hi=$pmax
+    [ "$hi" -le "$lo" ] && hi=$pmax
+    [ "$hi" -gt "$pmax" ] && hi=$pmax
+    if [ "$hi" -le "$lo" ]; then
+        method="无可用动态区间"
         return 1
     fi
+    set -- $(pick_mode "$lo"); lo_id=$1; lo_hz=$2
+    set -- $(pick_mode "$hi"); hi_id=$1; hi_hz=$2
+    [ -n "$lo_hz" ] || lo_hz=$lo
     [ -n "$hi_hz" ] || hi_hz=$hi
+    [ -n "$hi_id" ] || hi_id=$lo_id
 
     eng=$dyn_engine
     if [ "$eng" = "auto" ]; then
@@ -707,32 +758,52 @@ apply_dynamic_mode() {
         elif [ "$hi_hz" -gt "$nmax" ]; then
             hi_hz=$nmax
             set -- $(pick_mode "$hi_hz"); hi_id=$1; hi_hz=$2
+            [ -n "$hi_hz" ] || hi_hz=$nmax
             [ -n "$hi_id" ] || hi_id=$lo_id
             capnote="（系统上限 ${nmax}Hz）"
         fi
+    fi
+    if [ "$eng" = "adaptive" ]; then
+        sf_ok=0
+        if [ "$CAN_SF" = "1" ] && [ "$FAMILY_CACHE" = "xiaomi" ] && \
+           [ -n "$lo_id" ] && [ -n "$hi_id" ] && [ "$lo_id" != "$hi_id" ]; then
+            sf_ok=1
+        fi
+        if [ "$sf_ok" = "0" ] && [ "$hi_hz" -gt "$nmax" ] && [ "$nmax" -gt 60 ] 2>/dev/null; then
+            hi_hz=$nmax
+            set -- $(pick_mode "$hi_hz"); hi_id=$1; hi_hz=$2
+            [ -n "$hi_hz" ] || hi_hz=$nmax
+            [ -n "$hi_id" ] || hi_id=$lo_id
+            capnote="（系统上限 ${nmax}Hz）"
+        fi
+    fi
+    if [ "$hi_hz" -le "$lo_hz" ]; then
+        method="无可用动态区间"
+        return 1
     fi
 
     apply_native_range "$lo_hz" "$hi_hz"
     target_hz=$hi_hz
     verified=1
 
-    if [ "$eng" = "adaptive" ] && [ -n "$lo_id" ] && [ -n "$hi_id" ] && [ "$lo_id" != "$hi_id" ]; then
+    if [ "$eng" = "adaptive" ]; then
         engine="adaptive"
-        if [ "$CAN_SF" = "1" ] && [ "$FAMILY_CACHE" = "xiaomi" ]; then
+        if [ "$CAN_SF" = "1" ] && [ "$FAMILY_CACHE" = "xiaomi" ] && \
+           [ -n "$lo_id" ] && [ -n "$hi_id" ] && [ "$lo_id" != "$hi_id" ]; then
             ADAPT_KIND="sf"
             method="自适应 ${lo_hz}-${hi_hz}Hz"
             if sf_set "$hi_id" >/dev/null 2>&1; then
                 : > "$SFLAG" 2>/dev/null
             else
                 ADAPT_KIND="settings"
-                method="自适应 ${lo_hz}-${hi_hz}Hz（设置）"
+                method="自适应 ${lo_hz}-${hi_hz}Hz（设置）${capnote}"
                 settings put system min_refresh_rate "$hi_hz" >/dev/null 2>&1 &
                 settings put system peak_refresh_rate "$hi_hz" >/dev/null 2>&1 &
                 wait
             fi
         else
             ADAPT_KIND="settings"
-            method="自适应 ${lo_hz}-${hi_hz}Hz（设置）"
+            method="自适应 ${lo_hz}-${hi_hz}Hz（设置）${capnote}"
             settings put system min_refresh_rate "$hi_hz" >/dev/null 2>&1 &
             settings put system peak_refresh_rate "$hi_hz" >/dev/null 2>&1 &
             wait
@@ -1060,7 +1131,21 @@ json_status() {
         "$d_brand" "$d_model" "$d_market" "$d_rom" "$d_android" "$d_sdk" "$d_soc" "$d_platform" "$d_family"
 
     nmax=$(native_max); [ -n "$nmax" ] || nmax=$mx
-    printf '"panel":{"max":%s,"nativeMax":%s,"modes":[' "$mx" "$nmax"
+    rates=$(panel_rates)
+    printf '"panel":{"max":%s,"nativeMax":%s,"rates":[' "$mx" "$nmax"
+    first=1
+    if [ -n "$rates" ]; then
+        old_ifs=$IFS; IFS=','
+        set -- $rates
+        IFS=$old_ifs
+        for r in "$@"; do
+            [ -n "$r" ] || continue
+            [ "$first" = "1" ] || printf ','
+            first=0
+            printf '%s' "$r"
+        done
+    fi
+    printf '],"modes":['
     first=1
     if [ -s "$MODES" ]; then
         while read -r line; do
@@ -1149,30 +1234,34 @@ adaptive_loop() {
     if ! is_num "$hi" || [ "$hi" -eq 0 ]; then hi=$(max_hz); fi
     [ -n "$hi" ] || hi=120
     [ "$hi" -le "$lo" ] && hi=$((lo + 30))
+    lo=$(nearest_rate "$lo")
+    hi=$(nearest_rate "$hi")
+    is_num "$lo" || lo=60
+    is_num "$hi" || hi=$(max_hz)
+    [ "$hi" -le "$lo" ] && return 1
     set -- $(pick_mode "$lo"); lo_id=$1; lo_hz=$2
     set -- $(pick_mode "$hi"); hi_id=$1; hi_hz=$2
-    if [ -z "$lo_id" ] || [ -z "$hi_id" ] || [ "$lo_id" = "$hi_id" ]; then
-        log "adaptive: no modes ${lo}-${hi}"
-        dyn_engine=native
-        save_conf_key dyn_engine native
-        return 1
-    fi
+    [ -n "$lo_hz" ] || lo_hz=$lo
+    [ -n "$hi_hz" ] || hi_hz=$hi
     idle_s=$((dyn_idle_ms / 1000))
     [ "$idle_s" -ge 1 ] 2>/dev/null || idle_s=3
-    if [ "$ADAPT_KIND" = "settings" ]; then
-        adapt_kind="settings"
-    elif [ "$CAN_SF" = "1" ] && [ "$FAMILY_CACHE" = "xiaomi" ]; then
+
+    adapt_kind="settings"
+    if [ "$CAN_SF" = "1" ] && [ "$FAMILY_CACHE" = "xiaomi" ] && \
+       [ -n "$lo_id" ] && [ -n "$hi_id" ] && [ "$lo_id" != "$hi_id" ]; then
         adapt_kind="sf"
-    else
+    fi
+    if [ "$ADAPT_KIND" = "settings" ]; then
         adapt_kind="settings"
     fi
     ADAPT_KIND=$adapt_kind
-    cur_id=$hi_id
+    cur_level="H"
+
     if [ "$adapt_kind" = "settings" ]; then
         settings put system min_refresh_rate "$hi_hz" >/dev/null 2>&1 &
         settings put system peak_refresh_rate "$hi_hz" >/dev/null 2>&1 &
         wait
-        method="自适应 ${lo_hz}-${hi_hz}Hz（设置）"
+        method="自适应 ${lo_hz}-${hi_hz}Hz（设置）${capnote}"
     else
         sf_set "$hi_id" >/dev/null 2>&1
         method="自适应 ${lo_hz}-${hi_hz}Hz"
@@ -1204,7 +1293,7 @@ adaptive_loop() {
             elif [ "$act" != "$last_act" ]; then
                 last_act=$act
                 last_active=$t
-                if [ "$cur_id" != "$hi_id" ]; then
+                if [ "$cur_level" != "H" ]; then
                     if [ "$adapt_kind" = "settings" ]; then
                         settings put system min_refresh_rate "$hi_hz" >/dev/null 2>&1 &
                         settings put system peak_refresh_rate "$hi_hz" >/dev/null 2>&1 &
@@ -1212,11 +1301,11 @@ adaptive_loop() {
                     else
                         sf_set "$hi_id" >/dev/null 2>&1
                     fi
-                    cur_id=$hi_id
+                    cur_level="H"
                     write_state "$hi_hz"
                 fi
             elif [ $((t - last_active)) -ge "$idle_s" ]; then
-                if [ "$cur_id" != "$lo_id" ]; then
+                if [ "$cur_level" != "L" ]; then
                     if [ "$adapt_kind" = "settings" ]; then
                         settings put system min_refresh_rate "$lo_hz" >/dev/null 2>&1 &
                         settings put system peak_refresh_rate "$hi_hz" >/dev/null 2>&1 &
@@ -1224,12 +1313,12 @@ adaptive_loop() {
                     else
                         sf_set "$lo_id" >/dev/null 2>&1
                     fi
-                    cur_id=$lo_id
+                    cur_level="L"
                     write_state "$lo_hz"
                 fi
             fi
         else
-            if [ "$cur_id" != "$lo_id" ]; then
+            if [ "$cur_level" != "L" ]; then
                 if [ "$adapt_kind" = "settings" ]; then
                     settings put system min_refresh_rate "$lo_hz" >/dev/null 2>&1 &
                     settings put system peak_refresh_rate "$hi_hz" >/dev/null 2>&1 &
@@ -1237,7 +1326,7 @@ adaptive_loop() {
                 else
                     sf_set "$lo_id" >/dev/null 2>&1
                 fi
-                cur_id=$lo_id
+                cur_level="L"
                 write_state "$lo_hz"
             fi
             sleep 2
@@ -1355,8 +1444,9 @@ case "$cmd" in
         [ "$CAN_SF" = "1" ] && [ "${FAMILY_CACHE:-$(dev_get family)}" = "xiaomi" ] && adapt_kind="sf"
         rec="native"
         [ "$nmax" -lt "$mx" ] 2>/dev/null && rec="adaptive"
-        printf '{"ok":1,"family":"%s","can_sf":%s,"can_cmd":%s,"keys":"%s","panelMax":%s,"nativeMax":%s,"adapt":"%s","recommend":"%s","active":%s}\n' \
-            "$(jesc "$(dev_get family)")" "$CAN_SF" "$CAN_CMD" "$VENDOR_KEYS" "$mx" "$nmax" "$adapt_kind" "$rec" "$act"
+        rts=$(panel_rates)
+        printf '{"ok":1,"family":"%s","can_sf":%s,"can_cmd":%s,"keys":"%s","panelMax":%s,"nativeMax":%s,"rates":"%s","adapt":"%s","recommend":"%s","active":%s}\n' \
+            "$(jesc "$(dev_get family)")" "$CAN_SF" "$CAN_CMD" "$VENDOR_KEYS" "$mx" "$nmax" "$rts" "$adapt_kind" "$rec" "$act"
         ;;
     apply)
         apply_all

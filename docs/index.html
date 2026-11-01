@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#eef3fa" id="themeColor">
-<meta name="description" content="真·全局高刷 v2.1.0：小米 / OPPO / 一加 / realme 与通用机型，能力自检 + 多级回退，60–185Hz 固定档位，原生 / 自适应动态刷新率，触控加速与玻璃拟态 WebUI。">
+<meta name="description" content="真·全局高刷 v2.2.0：小米 / OPPO / 一加 / realme 与通用机型，能力自检 + 多级回退，60–185Hz 固定档位，原生 / 自适应动态刷新率，触控加速与玻璃拟态 WebUI。">
 <title>真·全局高刷 · 小米 / OPPO / 一加全平台</title>
 <link rel="stylesheet" href="style.css">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop stop-color='%230a84ff'/%3E%3Cstop offset='1' stop-color='%23af52de'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='18' fill='url(%23g)'/%3E%3Ctext x='32' y='44' font-size='34' text-anchor='middle' fill='white' font-family='sans-serif'%3E颖%3C/text%3E%3C/svg%3E">
@@ -41,16 +41,16 @@
 <main id="top">
   <div class="release-bar" id="releaseBar">
     <span class="rb-dot"></span>
-    <div><b id="releaseTitle">v2.1.0 已发布</b><em id="releaseDesc">能力自检 + 多级回退，更多机型可用</em></div>
+    <div><b id="releaseTitle">v2.2.0 已发布</b><em id="releaseDesc">动态下限支持 30Hz，按面板自动识别</em></div>
     <a href="#changelog">更新内容 →</a>
   </div>
   <section class="hero">
     <div class="hero-copy">
-      <span class="eyebrow"><i></i> v2.1.0 · Android 11+ · Magisk / KernelSU / APatch</span>
+      <span class="eyebrow"><i></i> v2.2.0 · Android 11+ · Magisk / KernelSU / APatch</span>
       <h1>把高刷，<br><span>锁进系统底层。</span></h1>
-      <p class="lead">真·全局高刷 v2.1.0。能力自检 + 多级回退，按机型选择可用的锁帧 / 动态接口；60–185Hz 固定档位，原生 / 自适应双动态引擎，静止降 60、触控回峰值。不是只写一个 <code>settings</code> 就自称全局。</p>
+      <p class="lead">真·全局高刷 v2.2.0。动态下限支持 30 / 60 / 90Hz，按面板上报自动识别；能力自检 + 多级回退，按机型选择可用的锁帧 / 动态接口；60–185Hz 固定档位，原生 / 自适应双动态引擎，静止降下限、触控回峰值。不是只写一个 <code>settings</code> 就自称全局。</p>
       <div class="cta">
-        <a class="btn blue" href="assets/global-hfr.zip?v=2.1.0" download="真·全局高刷.zip">
+        <a class="btn blue" href="assets/global-hfr.zip?v=2.2.0" download="真·全局高刷.zip">
           <svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></svg>
           下载模块
         </a>
@@ -167,16 +167,39 @@
       <div class="step card reveal"><b>03</b><h3>打开 WebUI</h3><p>KernelSU / APatch 模块页直接开；Magisk 安装 KsuWebUI 并授予 Root。</p></div>
     </div>
     <div class="install-cta reveal">
-      <a class="btn blue big" href="assets/global-hfr.zip?v=2.1.0" download="真·全局高刷.zip">下载 真·全局高刷.zip</a>
-      <span>Android 11+ · 约 44 KB · v2.1.0</span>
+      <a class="btn blue big" href="assets/global-hfr.zip?v=2.2.0" download="真·全局高刷.zip">下载 真·全局高刷.zip</a>
+      <span>Android 11+ · 约 42 KB · v2.2.0</span>
     </div>
   </section>
 
   <section class="section" id="changelog">
     <div class="sec-head reveal">
       <span class="eyebrow"><i></i> CHANGELOG</span>
-      <h2>v2.1.0<br>让更多机型能用。</h2>
-      <p>不再只认一台机器：能力自检 + 多级回退，按机型选择可用接口；不支持的机型会明确标注，不假装成功。</p>
+      <h2>v2.2.0<br>动态下限更细。</h2>
+      <p>30Hz 不是每块面板都支持：v2.2 按系统真实上报的档位生成下限，支持才显示，不支持不硬写。</p>
+    </div>
+    <div class="lock-card card reveal" style="margin-bottom:20px">
+      <div class="lock-row">
+        <span class="num">01</span>
+        <div><b>动态下限支持 30 / 60 / 90Hz</b><p>按 <code>mSupportedRefreshRates</code> 自动生成下限；面板上报 30Hz 才显示 30，未上报就自动隐藏，不写无效档位。</p></div>
+      </div>
+      <div class="lock-row">
+        <span class="num">02</span>
+        <div><b>新增 30–60 / 90 / 120 / 144 / 165 / 185 预设</b><p>按面板实际档位过滤；没有 185 的屏幕不会出现 30–185。60 / 90 / 120 起步的区间继续保留。</p></div>
+      </div>
+      <div class="lock-row">
+        <span class="num">03</span>
+        <div><b>30Hz 自动走设置引擎</b><p>没有 30Hz 显示模式、但系统支持 30Hz 下限的机型，自适应改用 <code>min_refresh_rate</code> 切换，不强行调不存在的 1035 档位。</p></div>
+      </div>
+      <div class="lock-row">
+        <span class="num">04</span>
+        <div><b>界面更紧凑</b><p>动态下限 / 上限选项按真实速率生成；预设控制在两行内，切换仍然即点即用。</p></div>
+      </div>
+      <p class="lock-note">v2.2 只动动态刷新率；全局固定档保持 v2.1 的逻辑，暂无用户反馈 bug。</p>
+    </div>
+    <div class="sec-head reveal" style="padding-top:6px">
+      <span class="eyebrow">v2.1.0</span>
+      <h2 style="font-size:24px">兼容性重构</h2>
     </div>
     <div class="lock-card card reveal" style="margin-bottom:20px">
       <div class="lock-row">
@@ -243,6 +266,7 @@
       <details class="reveal"><summary>耗电会不会变高？</summary><p>固定 165/185Hz 全程锁死必然更耗电。日常建议动态区间或 120Hz；电竞触控也会提高 GPU/调度功耗。可以先试动态模式。</p></details>
       <details class="reveal"><summary>出问题怎么恢复？</summary><p>WebUI → 设置 → 恢复系统默认；或直接在管理器卸载模块并重启。卸载脚本会还原刷新率设置、逐项还原触控节点、关闭浮层与底层锁。</p></details>
       <details class="reveal"><summary>截图里为什么写“界面示意”？</summary><p>因为那些图是浏览器渲染的界面预览，不是真机实拍。模块的实际效果取决于机型、ROM 和内核，建议以自己设备上的“已核验”状态和帧率浮窗为准。</p></details>
+      <details class="reveal"><summary>为什么我的动态下限没有 30Hz？</summary><p>30Hz 不是每块面板都支持。v2.2 读取系统上报的 <code>mSupportedRefreshRates</code>，只有面板真的上报 30Hz 才显示 30 选项；没上报就不会写一个无效档位。同理，90 / 144 / 185 也按真实档位出现。</p></details>
       <details class="reveal"><summary>其他品牌 / 其他系统能用吗？</summary><p>模块按能力而不是按机型写死：先尝试 Settings 的 <code>peak</code> / <code>min</code>，再试 DisplayManager <code>cmd display</code>，最后才用厂商底层锁。WebUI → 设置 → 兼容性自检会列出本机支持哪些接口。Android 11+ 且 ROM 保留标准接口的机型都能至少解锁与动态；能否锁死取决于 ROM 是否真的接受这些接口，模块不会假装成功。</p></details>
       <details class="reveal"><summary>为什么原生动态最高只有 120Hz，面板明明是 165Hz？</summary><p>部分 HyperOS 把 144 / 165Hz 作为底层增强档，系统策略的 <code>mLockedMaxRefreshRate</code> 只允许 120Hz。WebUI 会显示「系统上限」；要跑满 165Hz 动态，请把动态实现切到「自适应」，或使用「全局最高」。</p></details>
       <details class="reveal"><summary>刷了旧版，怎么知道有新版？</summary><p>模块内置 <code>updateJson</code>，KernelSU / APatch / Magisk 的模块页会显示更新角标；新版 WebUI 也会在打开时检查 GitHub 并在顶部显示新版本提示。每次发版都会更新 <code>update.json</code> 与本页更新日志。</p></details>
@@ -255,7 +279,7 @@
       <h2>真·全局高刷</h2>
       <p>小米 / OPPO / 一加全平台 · 60–185Hz · 动态刷新 · 触控增强</p>
       <div class="cta center">
-        <a class="btn blue" href="assets/global-hfr.zip?v=2.1.0" download="真·全局高刷.zip">下载模块</a>
+        <a class="btn blue" href="assets/global-hfr.zip?v=2.2.0" download="真·全局高刷.zip">下载模块</a>
         <a class="btn glass" data-repo href="https://github.com/yingge-dev/global-hfr" target="_blank" rel="noopener">GitHub</a>
       </div>
       <p class="tiny">作者：颖哥 · MIT License · 刷机有风险，请先备份</p>
