@@ -120,7 +120,7 @@ else
 fi
 
 # ---------- 更新模块描述 ----------
-desc="真·全局高刷 · 已适配 ${market}（${model}）｜${rom}｜面板最高 ${maxhz:-待检测}Hz｜原生/自适应动态｜WebUI 控制"
+desc="真·全局高刷 · 已适配 ${market}（${model}）｜${rom}｜面板最高 ${maxhz:-待检测}Hz｜能力自检+多级回退｜原生/自适应动态｜WebUI"
 desc=$(printf '%s' "$desc" | tr -d '|&')
 prop_tmp="$MODPATH/module.prop.tmp"
 grep -v '^description=' "$MODPATH/module.prop" > "$prop_tmp" 2>/dev/null

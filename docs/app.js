@@ -90,4 +90,24 @@
       if (e.key === 'Escape') close();
     });
   }
+
+  /* 版本提示：update.json 比本页新时，顶部横幅自动切换 */
+  (function () {
+    var SITE_VERSION = 'v2.1.0';
+    var SITE_CODE = 20100;
+    var bar = document.getElementById('releaseBar');
+    if (!bar) return;
+    fetch('update.json', { cache: 'no-store' }).then(function (r) {
+      if (!r.ok) throw new Error('http');
+      return r.json();
+    }).then(function (j) {
+      if (!j || !j.versionCode || Number(j.versionCode) <= SITE_CODE) return;
+      var t = document.getElementById('releaseTitle');
+      var d = document.getElementById('releaseDesc');
+      var a = bar.querySelector('a');
+      if (t) t.textContent = '发现新版本 ' + j.version;
+      if (d) d.textContent = '项目主页当前 ' + SITE_VERSION + '，新版本已发布';
+      if (a) a.href = j.changelog || '#changelog';
+    }).catch(function () {});
+  })();
 })();

@@ -1,5 +1,20 @@
 # Changelog
 
+## v2.1.0
+
+兼容性重构：不再只针对一台 Xiaomi 设备写死，改成“能力检测 + 多级回退”。
+
+- 新增设备能力自检：SurfaceFlinger 底层锁、DisplayManager `cmd display`、厂商刷新率键、系统原生上限；WebUI 设置页可随时查看。
+- 固定档三级回退：Settings → DisplayManager → SurfaceFlinger；每一步回读实际刷新率，全部失败标「兼容模式」，不谎称成功。
+- 新增通用自适应：没有 1035 底层锁的机型，改用 `min_refresh_rate` / `peak_refresh_rate` 切换，触控升上限、静止回下限。
+- 厂商刷新率键自动发现：HyperOS 的 `miui_refresh_rate`，OPPO / 一加 / realme 的厂商键，存在才写入，写前备份。
+- 非小米机型不再误用 SurfaceFlinger 1035；底层锁只在能力检测通过时启用。
+- 按系统原生上限给建议：原生动态跑不满面板时自动推荐自适应。
+- WebUI 新增「兼容性自检」，显示本机可用接口、系统上限、推荐动态与实际刷新率。
+- 项目主页新增版本发布横幅与更新日志。
+
+`v2.0.0` 的动态修复继续保留：HyperOS secure 刷新率、底层锁残留、原生 / 自适应双引擎、WebUI 状态缓存提速。
+
 ## v2.0.0
 
 动态刷新率重做，修复「静态画面不降 60」与「切回动态仍被锁在高刷」两个根因。

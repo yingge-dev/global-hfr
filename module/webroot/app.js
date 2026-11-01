@@ -95,6 +95,7 @@
         { id: 5, w: 1440, h: 3168, hz: 165 }
       ]
     },
+    caps: { can_sf: 0, can_cmd: 1, adapt: 'settings', keys: '' },
     config: {
       profile: 'dynamic', fixed_hz: 0, dyn_min: 60, dyn_max: 165,
       dyn_engine: 'auto', dyn_idle_ms: 3000,
@@ -503,6 +504,11 @@
       if (px > bestPx) { bestPx = px; res = m.w + ' × ' + m.h; }
     });
     var platform = platformText(d.platform);
+    var caps = state.caps || {};
+    var capText = [];
+    if (Number(caps.can_sf) === 1) capText.push('底层锁');
+    if (Number(caps.can_cmd) === 1) capText.push('DisplayManager');
+    if (!capText.length) capText.push('标准 Settings');
     var rows = [
       ['品牌', d.brand || '--'],
       ['机型', (d.market || '') + (d.model && d.model !== d.market ? ' · ' + d.model : '')],
@@ -512,6 +518,7 @@
       ['分辨率', res || '--'],
       ['档位', modes.length ? modes.join(' / ') + ' Hz' : '未扫描'],
       ['系统上限', ((state.panel && state.panel.nativeMax) || '--') + ' Hz'],
+      ['兼容接口', capText.join(' + ')],
       ['引擎', state.version || '--']
     ];
     $('#deviceKv').innerHTML = rows.map(function (r) {
@@ -916,6 +923,32 @@
           toast('扫描失败，请查看日志', 'err');
         }
       } finally { setBusy(false); }
+    });
+
+    $('#btnCompat').addEventListener('click', async function () {
+      if (guard()) return;
+      var r = await run('probe');
+      if (!r.json || !r.json.ok) { toast('自检失败，请查看日志', 'err'); return; }
+      var j = r.json;
+      var sf = Number(j.can_sf) === 1 ? '支持（SurfaceFlinger 1035）' : '不支持 / 未启用';
+      var cd = Number(j.can_cmd) === 1 ? '支持（cmd display）' : '不支持';
+      var rec = j.recommend === 'adaptive' ? '自适应动态（可跑满面板）' : '原生动态（系统内容调度）';
+      var keys = j.keys ? String(j.keys).replace(/:/g, ' / ') : '标准 peak / min';
+      var rows = [
+        ['厂商族', j.family || '--'],
+        ['底层锁', sf],
+        ['DisplayManager', cd],
+        ['面板最高', (j.panelMax || '--') + ' Hz'],
+        ['系统原生上限', (j.nativeMax || '--') + ' Hz'],
+        ['推荐动态', rec],
+        ['当前实际', (j.active || '--') + ' Hz'],
+        ['厂商刷新率键', keys]
+      ];
+      openSheet('<h3>兼容性自检</h3><p class="sub">只读取接口与设置，不修改显示状态</p><div class="rows">' +
+        rows.map(function (x) {
+          return '<div><span>' + esc(x[0]) + '</span><b>' + esc(x[1] || '--') + '</b></div>';
+        }).join('') + '</div>' +
+        '<p class="fine">如果「底层锁」不支持，固定档会优先走 DisplayManager / Settings；「推荐动态」会随系统上限自动选择。</p>');
     });
 
     $('#btnLog').addEventListener('click', async function () {

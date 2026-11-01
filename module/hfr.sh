@@ -28,6 +28,7 @@ TOUCHSTATE=$DATA/touch.state
 TOUCHSIG=$DATA/touch.sig
 REV=$DATA/rev
 SFLAG=$DATA/sf_override
+KEYSBAK=$DATA/keys.backup
 
 PATH=/system/bin:/system/xbin:/vendor/bin:/sbin:$PATH
 export PATH
@@ -49,8 +50,8 @@ if [ -f "$MODDIR/module.prop" ]; then
         esac
     done < "$MODDIR/module.prop"
 fi
-[ -n "$VER" ] || VER=v2.0.0
-is_num "$VC" || VC=20000
+[ -n "$VER" ] || VER=v2.1.0
+is_num "$VC" || VC=20100
 
 [ -d "$DATA" ] || mkdir -p "$DATA" 2>/dev/null
 
@@ -123,6 +124,12 @@ touch_applied=0
 sampling_applied=0
 sampling_method=""
 restart_required=0
+
+FAMILY_CACHE=""
+CAN_SF=0
+CAN_CMD=0
+VENDOR_KEYS=""
+ADAPT_KIND=""
 
 load_conf() {
     profile=fixed; fixed_hz=0; dyn_min=60; dyn_max=0
@@ -240,6 +247,7 @@ cache_device() {
         echo "soc=$(prop ro.soc.model)"
         echo "platform=$(platform_name)"
         echo "family=$fam"
+        detect_caps "$fam"
     } > "$DEV.tmp" 2>/dev/null && mv -f "$DEV.tmp" "$DEV" 2>/dev/null
 }
 
@@ -259,6 +267,97 @@ dev_get() {
         platform) platform_name ;;
         family) device_family ;;
     esac
+}
+
+detect_caps() {
+    fam=${1:-$(device_family)}
+    can_sf=0
+    can_cmd=0
+    keys=""
+    case "$fam" in
+        xiaomi) can_sf=1 ;;
+    esac
+    if command -v cmd >/dev/null 2>&1 && cmd display help 2>/dev/null | grep -q 'set-user-preferred-display-mode'; then
+        can_cmd=1
+    fi
+    for spec in secure:miui_refresh_rate system:oplus_screen_refresh_rate \
+                system:oneplus_screen_refresh_rate secure:oplus_refresh_rate \
+                system:realme_screen_refresh_rate system:smart_refresh_rate; do
+        ns=${spec%%:*}; key=${spec#*:}
+        v=$(settings get "$ns" "$key" 2>/dev/null | tr -d '\r\n')
+        if [ -n "$v" ] && [ "$v" != "null" ]; then
+            keys="$keys $spec"
+        fi
+    done
+    printf 'can_sf=%s\ncan_cmd=%s\nkeys=%s\n' "$can_sf" "$can_cmd" "$keys"
+}
+
+ensure_caps() {
+    [ -f "$DEV" ] || return 0
+    has=0
+    while IFS='=' read -r k v; do
+        [ "$k" = "can_sf" ] && has=1
+    done < "$DEV"
+    if [ "$has" = "0" ]; then
+        detect_caps >> "$DEV" 2>/dev/null
+    fi
+}
+
+caps_load() {
+    FAMILY_CACHE=""
+    CAN_SF=0
+    CAN_CMD=0
+    VENDOR_KEYS=""
+    if [ -f "$DEV" ]; then
+        while IFS='=' read -r k v; do
+            case "$k" in
+                family) FAMILY_CACHE=$v ;;
+                can_sf) CAN_SF=$v ;;
+                can_cmd) CAN_CMD=$v ;;
+                keys) VENDOR_KEYS=$v ;;
+            esac
+        done < "$DEV"
+    fi
+    [ -n "$FAMILY_CACHE" ] || FAMILY_CACHE=$(dev_get family)
+    if [ -n "$HFR_FORCE_FAMILY" ]; then
+        FAMILY_CACHE=$HFR_FORCE_FAMILY
+        [ "$FAMILY_CACHE" = "xiaomi" ] || CAN_SF=0
+    fi
+    [ -n "$HFR_FORCE_NO_SF" ] && CAN_SF=0
+    case "$CAN_SF" in 0|1) ;; *) CAN_SF=0 ;; esac
+    case "$CAN_CMD" in 0|1) ;; *) CAN_CMD=0 ;; esac
+}
+
+set_vendor_keys() {
+    val=$1
+    for spec in $VENDOR_KEYS; do
+        ns=${spec%%:*}; key=${spec#*:}
+        settings put "$ns" "$key" "$val" >/dev/null 2>&1 &
+    done
+}
+
+backup_vendor_keys() {
+    [ -f "$KEYSBAK" ] && return 0
+    [ -n "$VENDOR_KEYS" ] || return 0
+    : > "$KEYSBAK" 2>/dev/null
+    for spec in $VENDOR_KEYS; do
+        ns=${spec%%:*}; key=${spec#*:}
+        v=$(settings get "$ns" "$key" 2>/dev/null | tr -d '\r\n')
+        printf '%s=%s\n' "$spec" "$v" >> "$KEYSBAK" 2>/dev/null
+    done
+}
+
+restore_vendor_keys() {
+    [ -f "$KEYSBAK" ] || return 0
+    while IFS='=' read -r spec v; do
+        [ -n "$spec" ] || continue
+        ns=${spec%%:*}; key=${spec#*:}
+        case "$v" in
+            ''|null) del_setting "$ns" "$key" ;;
+            *) put_setting "$ns" "$key" "$v" ;;
+        esac
+    done < "$KEYSBAK"
+    rm -f "$KEYSBAK"
 }
 
 # ------------------------------------------------------------
@@ -445,6 +544,7 @@ backup_orig() {
     elif ! grep -q '^miui=' "$ORIG" 2>/dev/null; then
         echo "miui=$(settings get secure miui_refresh_rate 2>/dev/null | tr -d '\r\n')" >> "$ORIG" 2>/dev/null
     fi
+    backup_vendor_keys
 }
 
 restore_orig() {
@@ -476,6 +576,7 @@ restore_orig() {
             *) put_setting secure miui_refresh_rate "$miui" ;;
         esac
     fi
+    restore_vendor_keys
     rm -f "$ORIG"
     log "restore orig peak=$peak min=$min"
 }
@@ -486,11 +587,20 @@ apply_native_range() {
     settings put system min_refresh_rate "$lo" >/dev/null 2>&1 &
     settings put system peak_refresh_rate "$hi" >/dev/null 2>&1 &
     settings delete system user_refresh_rate >/dev/null 2>&1 &
-    if [ "$(dev_get family)" = "xiaomi" ]; then
-        settings put secure miui_refresh_rate "$hi" >/dev/null 2>&1 &
-    fi
+    set_vendor_keys "$hi"
     wait
     log "native range $lo-$hi"
+}
+
+read_active_hz() {
+    v=$(dumpsys SurfaceFlinger 2>/dev/null | sed -n 's/.*activeMode=.*vsyncRate=\([0-9.]*\) Hz.*/\1/p' | head -n 1)
+    if [ -z "$v" ]; then
+        v=$(dumpsys display 2>/dev/null | sed -n 's/.*mActiveSfDisplayMode=.*vsyncRate=\([0-9.]*\).*/\1/p' | head -n 1)
+    fi
+    case "$v" in
+        ''|*[!0-9.]*) return 1 ;;
+    esac
+    awk -v x="$v" 'BEGIN{printf "%.0f\n", x}' 2>/dev/null
 }
 
 apply_fixed_mode() {
@@ -509,31 +619,54 @@ apply_fixed_mode() {
     settings put system min_refresh_rate "$mhz" >/dev/null 2>&1 &
     settings put system peak_refresh_rate "$mhz" >/dev/null 2>&1 &
     settings put system user_refresh_rate "$mhz" >/dev/null 2>&1 &
-    if [ "$(dev_get family)" = "xiaomi" ]; then
-        settings put secure miui_refresh_rate "$mhz" >/dev/null 2>&1 &
-    fi
+    set_vendor_keys "$mhz"
     wait
     target_hz=$mhz
     method="Settings ${mhz}Hz"
-    verified=1
-    if [ "$deep_lock" = "1" ] && [ "$(dev_get family)" = "xiaomi" ]; then
+    verified=0
+
+    # Xiaomi / HyperOS: the vendor backdoor is the only reliable hard lock.
+    if [ "$deep_lock" = "1" ] && [ "$CAN_SF" = "1" ]; then
         if sf_set "$mid"; then
             method="SurfaceFlinger mode $mid"
             : > "$SFLAG" 2>/dev/null
-        else
-            wh=$(mode_wh "$mid")
-            [ -n "$wh" ] && cmd display set-user-preferred-display-mode $wh "$mhz" 0 0 >/dev/null 2>&1
-            [ -n "$wh" ] && method="DisplayManager ${mhz}Hz" || method="Settings ${mhz}Hz"
+            verified=1
+            return 0
         fi
-    else
-        wh=$(mode_wh "$mid")
-        if [ -n "$wh" ] && cmd display set-user-preferred-display-mode $wh "$mhz" 0 0 >/dev/null 2>&1; then
+    fi
+
+    # Generic path: DisplayManager user preferred mode first.
+    wh=$(mode_wh "$mid")
+    if [ "$CAN_CMD" = "1" ] && [ -n "$wh" ]; then
+        cmd display set-user-preferred-display-mode $wh "$mhz" 0 0 >/dev/null 2>&1
+        sleep 0.45
+        c=$(read_active_hz)
+        if [ -n "$c" ] && [ $((c - mhz)) -le 2 ] 2>/dev/null && [ $((mhz - c)) -le 2 ] 2>/dev/null; then
             method="DisplayManager ${mhz}Hz"
-        elif [ "$deep_lock" = "1" ] && sf_set "$mid"; then
-            method="SurfaceFlinger mode $mid"
-        else
-            method="Settings ${mhz}Hz"
+            verified=1
+            return 0
         fi
+    fi
+
+    # Last vendor fallback, only when capability is known.
+    if [ "$deep_lock" = "1" ] && [ "$CAN_SF" = "1" ]; then
+        if sf_set "$mid"; then
+            method="SurfaceFlinger mode $mid"
+            : > "$SFLAG" 2>/dev/null
+            verified=1
+            return 0
+        fi
+    fi
+
+    # Verify the plain settings range; some AOSP ROMs honor min=peak.
+    sleep 0.35
+    c=$(read_active_hz)
+    if [ -n "$c" ] && [ $((c - mhz)) -le 2 ] 2>/dev/null && [ $((mhz - c)) -le 2 ] 2>/dev/null; then
+        method="Settings ${mhz}Hz"
+        verified=1
+    else
+        method="兼容模式 ${mhz}Hz（系统未确认）"
+        verified=0
     fi
     return 0
 }
@@ -560,7 +693,7 @@ apply_dynamic_mode() {
     if [ "$eng" = "auto" ]; then
         if [ -f "$SFLAG" ]; then
             eng="adaptive"
-        elif [ "$(dev_get family)" = "xiaomi" ] && [ "$nmax" -lt "$pmax" ] && [ "$hi_hz" -gt "$nmax" ]; then
+        elif [ "$FAMILY_CACHE" = "xiaomi" ] && [ "$nmax" -lt "$pmax" ] && [ "$hi_hz" -gt "$nmax" ]; then
             eng="adaptive"
         else
             eng="native"
@@ -585,9 +718,24 @@ apply_dynamic_mode() {
 
     if [ "$eng" = "adaptive" ] && [ -n "$lo_id" ] && [ -n "$hi_id" ] && [ "$lo_id" != "$hi_id" ]; then
         engine="adaptive"
-        method="自适应 ${lo_hz}-${hi_hz}Hz"
-        if sf_set "$hi_id" >/dev/null 2>&1; then
-            : > "$SFLAG" 2>/dev/null
+        if [ "$CAN_SF" = "1" ] && [ "$FAMILY_CACHE" = "xiaomi" ]; then
+            ADAPT_KIND="sf"
+            method="自适应 ${lo_hz}-${hi_hz}Hz"
+            if sf_set "$hi_id" >/dev/null 2>&1; then
+                : > "$SFLAG" 2>/dev/null
+            else
+                ADAPT_KIND="settings"
+                method="自适应 ${lo_hz}-${hi_hz}Hz（设置）"
+                settings put system min_refresh_rate "$hi_hz" >/dev/null 2>&1 &
+                settings put system peak_refresh_rate "$hi_hz" >/dev/null 2>&1 &
+                wait
+            fi
+        else
+            ADAPT_KIND="settings"
+            method="自适应 ${lo_hz}-${hi_hz}Hz（设置）"
+            settings put system min_refresh_rate "$hi_hz" >/dev/null 2>&1 &
+            settings put system peak_refresh_rate "$hi_hz" >/dev/null 2>&1 &
+            wait
         fi
     else
         engine="native"
@@ -606,7 +754,7 @@ apply_display() {
     method=""; verified=0; target_hz=0; engine=""
     case "$profile" in
         off)
-            [ "$(dev_get family)" = "xiaomi" ] && sf_set 0 >/dev/null 2>&1
+            [ "${FAMILY_CACHE:-$(dev_get family)}" = "xiaomi" ] && sf_set 0 >/dev/null 2>&1
             restore_orig
             method="系统默认"
             verified=1
@@ -844,7 +992,7 @@ apply_all() {
 
 restore_all() {
     restart_required=0
-    if [ "$(dev_get family)" = "xiaomi" ]; then
+    if [ "${FAMILY_CACHE:-$(dev_get family)}" = "xiaomi" ] && [ "$CAN_SF" = "1" ]; then
         sf_set 0 >/dev/null 2>&1
         restart_required=1
     fi
@@ -924,6 +1072,10 @@ json_status() {
         done < "$MODES"
     fi
     printf ']},'
+
+    adapt_kind="settings"
+    [ "$CAN_SF" = "1" ] && [ "$d_family" = "xiaomi" ] && adapt_kind="sf"
+    printf '"caps":{"can_sf":%s,"can_cmd":%s,"adapt":"%s","keys":"%s"},' "$CAN_SF" "$CAN_CMD" "$adapt_kind" "$VENDOR_KEYS"
 
     printf '"config":{"profile":"%s","fixed_hz":%s,"dyn_min":%s,"dyn_max":%s,"dyn_engine":"%s","dyn_idle_ms":%s,"touch":%s,"touch_level":"%s","sampling":%s,"deep_lock":%s,"overlay":%s,"daemon":%s,"auto_boot":%s,"oplus_props":%s},' \
         "$profile" "$fixed_hz" "$dyn_min" "$dyn_max" "$dyn_engine" "$dyn_idle_ms" "$touch" "$touch_level" "$sampling" "$deep_lock" "$overlay" "$daemon" "$auto_boot" "$oplus_props"
@@ -1007,16 +1159,31 @@ adaptive_loop() {
     fi
     idle_s=$((dyn_idle_ms / 1000))
     [ "$idle_s" -ge 1 ] 2>/dev/null || idle_s=3
+    if [ "$ADAPT_KIND" = "settings" ]; then
+        adapt_kind="settings"
+    elif [ "$CAN_SF" = "1" ] && [ "$FAMILY_CACHE" = "xiaomi" ]; then
+        adapt_kind="sf"
+    else
+        adapt_kind="settings"
+    fi
+    ADAPT_KIND=$adapt_kind
     cur_id=$hi_id
-    sf_set "$hi_id" >/dev/null 2>&1
+    if [ "$adapt_kind" = "settings" ]; then
+        settings put system min_refresh_rate "$hi_hz" >/dev/null 2>&1 &
+        settings put system peak_refresh_rate "$hi_hz" >/dev/null 2>&1 &
+        wait
+        method="自适应 ${lo_hz}-${hi_hz}Hz（设置）"
+    else
+        sf_set "$hi_id" >/dev/null 2>&1
+        method="自适应 ${lo_hz}-${hi_hz}Hz"
+    fi
     target_hz=$hi_hz
-    method="自适应 ${lo_hz}-${hi_hz}Hz"
     engine="adaptive"
     verified=1
     last_act=""
     last_active=$(now)
     last_rev=$(cat "$REV" 2>/dev/null)
-    log "adaptive start ${lo_hz}-${hi_hz} idle=${idle_s}s"
+    log "adaptive start ${lo_hz}-${hi_hz} kind=$adapt_kind idle=${idle_s}s"
     tick=0
 
     while :; do
@@ -1038,20 +1205,38 @@ adaptive_loop() {
                 last_act=$act
                 last_active=$t
                 if [ "$cur_id" != "$hi_id" ]; then
-                    sf_set "$hi_id" >/dev/null 2>&1
+                    if [ "$adapt_kind" = "settings" ]; then
+                        settings put system min_refresh_rate "$hi_hz" >/dev/null 2>&1 &
+                        settings put system peak_refresh_rate "$hi_hz" >/dev/null 2>&1 &
+                        wait
+                    else
+                        sf_set "$hi_id" >/dev/null 2>&1
+                    fi
                     cur_id=$hi_id
                     write_state "$hi_hz"
                 fi
             elif [ $((t - last_active)) -ge "$idle_s" ]; then
                 if [ "$cur_id" != "$lo_id" ]; then
-                    sf_set "$lo_id" >/dev/null 2>&1
+                    if [ "$adapt_kind" = "settings" ]; then
+                        settings put system min_refresh_rate "$lo_hz" >/dev/null 2>&1 &
+                        settings put system peak_refresh_rate "$hi_hz" >/dev/null 2>&1 &
+                        wait
+                    else
+                        sf_set "$lo_id" >/dev/null 2>&1
+                    fi
                     cur_id=$lo_id
                     write_state "$lo_hz"
                 fi
             fi
         else
             if [ "$cur_id" != "$lo_id" ]; then
-                sf_set "$lo_id" >/dev/null 2>&1
+                if [ "$adapt_kind" = "settings" ]; then
+                    settings put system min_refresh_rate "$lo_hz" >/dev/null 2>&1 &
+                    settings put system peak_refresh_rate "$hi_hz" >/dev/null 2>&1 &
+                    wait
+                else
+                    sf_set "$lo_id" >/dev/null 2>&1
+                fi
                 cur_id=$lo_id
                 write_state "$lo_hz"
             fi
@@ -1146,6 +1331,8 @@ run_daemon() {
 cmd=${1:-status}
 load_conf
 [ -f "$DEV" ] || cache_device
+ensure_caps
+caps_load
 
 case "$cmd" in
     status|info)
@@ -1154,11 +1341,22 @@ case "$cmd" in
         ;;
     scan)
         if scan_modes; then
-            cache_device
             printf '{"ok":1,"count":%s,"max":%s}\n' "$(wc -l < "$MODES")" "$(max_hz)"
         else
             printf '{"ok":0,"count":0,"max":0}\n'
         fi
+        ;;
+    probe)
+        ensure_modes
+        mx=$(max_hz); [ -n "$mx" ] || mx=0
+        nmax=$(native_max); [ -n "$nmax" ] || nmax=$mx
+        act=$(read_active_hz); [ -n "$act" ] || act=0
+        adapt_kind="settings"
+        [ "$CAN_SF" = "1" ] && [ "${FAMILY_CACHE:-$(dev_get family)}" = "xiaomi" ] && adapt_kind="sf"
+        rec="native"
+        [ "$nmax" -lt "$mx" ] 2>/dev/null && rec="adaptive"
+        printf '{"ok":1,"family":"%s","can_sf":%s,"can_cmd":%s,"keys":"%s","panelMax":%s,"nativeMax":%s,"adapt":"%s","recommend":"%s","active":%s}\n' \
+            "$(jesc "$(dev_get family)")" "$CAN_SF" "$CAN_CMD" "$VENDOR_KEYS" "$mx" "$nmax" "$adapt_kind" "$rec" "$act"
         ;;
     apply)
         apply_all
@@ -1266,7 +1464,7 @@ case "$cmd" in
         run_daemon
         ;;
     *)
-        echo "usage: hfr.sh status|scan|apply|switch fixed <hz>|dynamic <lo> <hi> [engine]|off|set <k> <v>|preset|touch|restore|reboot|toggle|log|modes|daemon" >&2
+        echo "usage: hfr.sh status|probe|scan|apply|switch fixed <hz>|dynamic <lo> <hi> [engine]|off|set <k> <v>|preset|touch|restore|reboot|toggle|log|modes|daemon" >&2
         exit 2
         ;;
 esac

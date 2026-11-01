@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#eef3fa" id="themeColor">
-<meta name="description" content="真·全局高刷 v2.0.0：小米 / OPPO / 一加 / realme 与通用机型，60–185Hz 固定档位，原生 / 自适应动态刷新率，触控加速与玻璃拟态 WebUI。">
+<meta name="description" content="真·全局高刷 v2.1.0：小米 / OPPO / 一加 / realme 与通用机型，能力自检 + 多级回退，60–185Hz 固定档位，原生 / 自适应动态刷新率，触控加速与玻璃拟态 WebUI。">
 <title>真·全局高刷 · 小米 / OPPO / 一加全平台</title>
 <link rel="stylesheet" href="style.css">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop stop-color='%230a84ff'/%3E%3Cstop offset='1' stop-color='%23af52de'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='18' fill='url(%23g)'/%3E%3Ctext x='32' y='44' font-size='34' text-anchor='middle' fill='white' font-family='sans-serif'%3E颖%3C/text%3E%3C/svg%3E">
@@ -39,11 +39,16 @@
 </header>
 
 <main id="top">
+  <div class="release-bar" id="releaseBar">
+    <span class="rb-dot"></span>
+    <div><b id="releaseTitle">v2.1.0 已发布</b><em id="releaseDesc">能力自检 + 多级回退，更多机型可用</em></div>
+    <a href="#changelog">更新内容 →</a>
+  </div>
   <section class="hero">
     <div class="hero-copy">
-      <span class="eyebrow"><i></i> v2.0.0 · Android 11+ · Magisk / KernelSU / APatch</span>
+      <span class="eyebrow"><i></i> v2.1.0 · Android 11+ · Magisk / KernelSU / APatch</span>
       <h1>把高刷，<br><span>锁进系统底层。</span></h1>
-      <p class="lead">真·全局高刷 v2.0.0。60–185Hz 固定档位，原生 / 自适应双动态引擎，静止降 60、触控回峰值；触控加速与玻璃拟态 WebUI。不是只写一个 <code>settings</code> 就自称全局。</p>
+      <p class="lead">真·全局高刷 v2.1.0。能力自检 + 多级回退，按机型选择可用的锁帧 / 动态接口；60–185Hz 固定档位，原生 / 自适应双动态引擎，静止降 60、触控回峰值。不是只写一个 <code>settings</code> 就自称全局。</p>
       <div class="cta">
         <a class="btn blue" href="assets/global-hfr.zip" download="真·全局高刷.zip">
           <svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></svg>
@@ -87,7 +92,7 @@
       <article class="card reveal">
         <span class="ico"><svg viewBox="0 0 24 24"><path d="M3 15c2.5 0 2.5-6 5-6s2.5 6 5 6 2.5-6 5-6 2.5 6 5 6"/></svg></span>
         <h3>原生 / 自适应动态</h3>
-        <p>原生：系统按画面内容调度，最省电；自适应：触控升到上限，静止 3 秒回到下限。60–120 / 60–144 / 60–165 / 120–165 多档可选。</p>
+        <p>原生：系统按画面内容调度，最省电；自适应：触控升到上限，静止 3 秒回到下限。底层锁不可用时自动改用 Settings 动态，不依赖小米 1035。</p>
       </article>
       <article class="card reveal">
         <span class="ico"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg></span>
@@ -163,15 +168,42 @@
     </div>
     <div class="install-cta reveal">
       <a class="btn blue big" href="assets/global-hfr.zip" download="真·全局高刷.zip">下载 真·全局高刷.zip</a>
-      <span>Android 11+ · 约 39 KB · v2.0.0</span>
+      <span>Android 11+ · 约 44 KB · v2.1.0</span>
     </div>
   </section>
 
   <section class="section" id="changelog">
     <div class="sec-head reveal">
       <span class="eyebrow"><i></i> CHANGELOG</span>
-      <h2>v2.0.0<br>这次修的是根子。</h2>
-      <p>旧版动态只写 peak / min，HyperOS 的 secure 刷新率与底层锁残留会让屏幕一直停在最高档。</p>
+      <h2>v2.1.0<br>让更多机型能用。</h2>
+      <p>不再只认一台机器：能力自检 + 多级回退，按机型选择可用接口；不支持的机型会明确标注，不假装成功。</p>
+    </div>
+    <div class="lock-card card reveal" style="margin-bottom:20px">
+      <div class="lock-row">
+        <span class="num">01</span>
+        <div><b>能力自检</b><p>检测 SurfaceFlinger 底层锁、DisplayManager <code>cmd display</code>、厂商刷新率键与系统原生上限；WebUI 设置页可随时重新自检。</p></div>
+      </div>
+      <div class="lock-row">
+        <span class="num">02</span>
+        <div><b>固定档三级回退</b><p>Settings → DisplayManager → SurfaceFlinger；每一步回读实际刷新率，全部失败就标「兼容模式」，不谎称已锁定。</p></div>
+      </div>
+      <div class="lock-row">
+        <span class="num">03</span>
+        <div><b>通用自适应</b><p>没有 1035 底层锁的机型，自适应改用 <code>min_refresh_rate</code> / <code>peak_refresh_rate</code> 切换：触控升上限，静止回下限。</p></div>
+      </div>
+      <div class="lock-row">
+        <span class="num">04</span>
+        <div><b>厂商键自动发现</b><p>HyperOS 的 <code>miui_refresh_rate</code>、OPPO / 一加 / realme 的厂商键，存在才写入，写前备份；不存在就只用标准 peak / min。</p></div>
+      </div>
+      <div class="lock-row">
+        <span class="num">05</span>
+        <div><b>按系统上限给建议</b><p>读取 <code>mLockedMaxRefreshRate</code>；原生动态跑不满面板时自动推荐自适应，165Hz 不再只有固定档一条路。</p></div>
+      </div>
+      <p class="lock-note">其他品牌 / 系统：只要是 Android 11+ 且支持标准 DisplayManager / Settings 接口，就能至少解锁档位与动态；具体能否锁死取决于 ROM 是否暴露对应接口，自检页会直接告诉你。</p>
+    </div>
+    <div class="sec-head reveal" style="padding-top:6px">
+      <span class="eyebrow">v2.0.0</span>
+      <h2 style="font-size:24px">动态刷新率修复</h2>
     </div>
     <div class="lock-card card reveal">
       <div class="lock-row">
@@ -188,7 +220,7 @@
       </div>
       <div class="lock-row">
         <span class="num">04</span>
-        <div><b>WebUI 延迟从秒级降到 0.15s</b><p>状态查询改为缓存文件 + 内置解析，不再每次轮询都跑 <code>dumpsys</code>；切换档位单进程完成。</p></div>
+        <div><b>WebUI 延迟从秒级降到 0.2s</b><p>状态查询改为缓存文件 + 内置解析，不再每次轮询都跑 <code>dumpsys</code>；切换档位单进程完成。</p></div>
       </div>
       <div class="lock-row">
         <span class="num">05</span>
@@ -211,6 +243,7 @@
       <details class="reveal"><summary>耗电会不会变高？</summary><p>固定 165/185Hz 全程锁死必然更耗电。日常建议动态区间或 120Hz；电竞触控也会提高 GPU/调度功耗。可以先试动态模式。</p></details>
       <details class="reveal"><summary>出问题怎么恢复？</summary><p>WebUI → 设置 → 恢复系统默认；或直接在管理器卸载模块并重启。卸载脚本会还原刷新率设置、逐项还原触控节点、关闭浮层与底层锁。</p></details>
       <details class="reveal"><summary>截图里为什么写“界面示意”？</summary><p>因为那些图是浏览器渲染的界面预览，不是真机实拍。模块的实际效果取决于机型、ROM 和内核，建议以自己设备上的“已核验”状态和帧率浮窗为准。</p></details>
+      <details class="reveal"><summary>其他品牌 / 其他系统能用吗？</summary><p>模块按能力而不是按机型写死：先尝试 Settings 的 <code>peak</code> / <code>min</code>，再试 DisplayManager <code>cmd display</code>，最后才用厂商底层锁。WebUI → 设置 → 兼容性自检会列出本机支持哪些接口。Android 11+ 且 ROM 保留标准接口的机型都能至少解锁与动态；能否锁死取决于 ROM 是否真的接受这些接口，模块不会假装成功。</p></details>
       <details class="reveal"><summary>为什么原生动态最高只有 120Hz，面板明明是 165Hz？</summary><p>部分 HyperOS 把 144 / 165Hz 作为底层增强档，系统策略的 <code>mLockedMaxRefreshRate</code> 只允许 120Hz。WebUI 会显示「系统上限」；要跑满 165Hz 动态，请把动态实现切到「自适应」，或使用「全局最高」。</p></details>
       <details class="reveal"><summary>刷了旧版，怎么知道有新版？</summary><p>模块内置 <code>updateJson</code>，KernelSU / APatch / Magisk 的模块页会显示更新角标；新版 WebUI 也会在打开时检查 GitHub 并在顶部显示新版本提示。每次发版都会更新 <code>update.json</code> 与本页更新日志。</p></details>
     </div>
