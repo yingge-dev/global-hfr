@@ -218,9 +218,12 @@ if ('serviceWorker' in navigator) {
 
   var tracks = [
     { title: '唐人恋曲 (DJ版)', artist: 'DJ大圣', src: 'assets/music/tangren-lianqu-dj.mp3' },
-    { title: '红尘客栈 (DJ版)', artist: 'DJ冷冰冰', src: 'assets/music/hongchen-kz-dj.mp3' }
+    { title: '红尘客栈 (DJ版)', artist: 'DJ冷冰冰', src: 'assets/music/hongchen-kz-dj.mp3' },
+    { title: '梦的翅膀受了伤 (Remix)', artist: 'Remix', src: 'assets/music/mengde-chibang-remix.mp3' }
   ];
   var idx = 0;
+  var history = [];
+  var hIdx = -1;
   var needsGesture = false;
   var started = false;
   var interacted = false;
@@ -234,6 +237,35 @@ if ('serviceWorker' in navigator) {
     if (stateEl) stateEl.textContent = txt;
     btn.classList.toggle('playing', !audio.paused);
     if (toggle) toggle.classList.toggle('playing', !audio.paused);
+  }
+
+  function record(i) {
+    history = history.slice(0, hIdx + 1);
+    history.push(i);
+    hIdx = history.length - 1;
+  }
+
+  function pickNext() {
+    if (tracks.length < 2) return idx;
+    var pool = [];
+    for (var i = 0; i < tracks.length; i++) if (i !== idx) pool.push(i);
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+
+  function playNext() {
+    var n = pickNext();
+    record(n);
+    load(n, true);
+  }
+
+  function playPrev() {
+    if (hIdx > 0) {
+      hIdx -= 1;
+      load(history[hIdx], true);
+    } else {
+      try { audio.currentTime = 0; } catch (e) {}
+      startAudible();
+    }
   }
 
   function load(i, play) {
@@ -325,7 +357,7 @@ if ('serviceWorker' in navigator) {
   audio.addEventListener('pause', function () {
     if (started) setState(audio.muted ? '点击开启声音' : '已暂停');
   });
-  audio.addEventListener('ended', function () { load(idx + 1, true); });
+  audio.addEventListener('ended', function () { playNext(); });
   audio.addEventListener('error', function () { setState('音频加载失败'); });
 
   btn.addEventListener('click', function () { togglePanel(); });
@@ -335,8 +367,8 @@ if ('serviceWorker' in navigator) {
     else if (audio.paused) startAudible();
     else audio.pause();
   });
-  if (next) next.addEventListener('click', function () { load(idx + 1, true); });
-  if (prev) prev.addEventListener('click', function () { load(idx - 1, true); });
+  if (next) next.addEventListener('click', function () { playNext(); });
+  if (prev) prev.addEventListener('click', function () { playPrev(); });
 
   // 第一次点击页面任意位置：如果有声音自动播放被拦截，立即开声并从 0 开始
   document.addEventListener('pointerdown', function () {
@@ -344,6 +376,9 @@ if ('serviceWorker' in navigator) {
     if (needsGesture || audio.muted || mutedAuto) unmuteAndPlay();
   }, true);
 
-  load(0, false);
+  var startIdx = Math.floor(Math.random() * tracks.length);
+  history = [startIdx];
+  hIdx = 0;
+  load(startIdx, false);
   tryAutoplay();
 })();
