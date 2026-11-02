@@ -217,9 +217,7 @@ if ('serviceWorker' in navigator) {
   if (!audio || !btn) return;
 
   var tracks = [
-    { title: 'Night Drive', src: 'assets/music/night-drive.wav' },
-    { title: 'Glass Horizon', src: 'assets/music/glass-horizon.wav' },
-    { title: 'Neon Pulse', src: 'assets/music/neon-pulse.wav' }
+    { title: '唐人恋曲 (DJ版)', artist: 'DJ大圣', src: 'assets/music/tangren-lianqu-dj.mp3' }
   ];
   var idx = 0;
   var needsGesture = false;
@@ -241,6 +239,9 @@ if ('serviceWorker' in navigator) {
     audio.load();
     if (title) title.textContent = t.title;
     if (idxEl) idxEl.textContent = (idx + 1) + ' / ' + tracks.length;
+    if (next) next.disabled = tracks.length < 2;
+    if (prev) prev.disabled = tracks.length < 2;
+    if (stateEl && t.artist) stateEl.textContent = t.artist;
     if (play) playAudio();
     else setState('已暂停');
   }
