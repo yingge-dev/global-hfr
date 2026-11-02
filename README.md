@@ -2,7 +2,7 @@
   <img src="screenshots/01_封面.png" alt="真·全局高刷" width="100%">
 </p>
 
-<h1 align="center">真·全局高刷 v2.2.1</h1>
+<h1 align="center">真·全局高刷 v2.2.2</h1>
 
 <p align="center">
   小米 / OPPO / 一加 / realme 与通用骁龙 · 天玑机型<br>
@@ -28,6 +28,15 @@
 </p>
 
 ---
+
+## v2.2.2 更新了什么
+
+WebUI 底栏新增项目主页入口，只改界面与跳转，不动刷新率策略。
+
+- 底栏从 3 个变 4 个：「刷新率 / 触控 / 设置 / 主页」。
+- 点「主页」优先用 `am start` 调起系统浏览器，失败时回退普通链接，兼容 KernelSU / APatch WebUI。
+- 修复 tab 切换把外部链接当作内部页面处理的问题。
+- 代码审计：检查 tab 事件、回调、未使用状态字段和无用逻辑；`node --check` / `bash -n` 通过。
 
 ## v2.2.1 更新了什么
 

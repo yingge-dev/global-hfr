@@ -77,8 +77,8 @@
   var DEMO = {
     ok: 1,
     ts: Math.floor(Date.now() / 1000),
-    version: 'v2.2.0',
-    versionCode: 20200,
+    version: 'v2.2.2',
+    versionCode: 20202,
     device: {
       brand: 'OnePlus', model: 'PJZ110', market: 'OnePlus 13',
       rom: 'ColorOS 15.0.1', android: '15', sdk: 35,
@@ -818,6 +818,36 @@
     return b ? b.getAttribute('data-engine') : 'auto';
   }
 
+  function openSite(e) {
+    if (e) e.preventDefault();
+    var url = 'https://yingge-dev.github.io/global-hfr/';
+    function fallback() {
+      try {
+        var a = document.createElement('a');
+        a.href = url;
+        a.target = '_blank';
+        a.rel = 'noopener';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function () { try { a.remove(); } catch (e) {} }, 0);
+      } catch (err) {
+        try { location.href = url; } catch (e2) {}
+      }
+    }
+    if (window.ksu && typeof window.ksu.exec === 'function') {
+      var cb = '__hfr_site_' + Date.now();
+      window[cb] = function (errno) {
+        try { delete window[cb]; } catch (err) {}
+        if (errno != null && Number(errno) !== 0) fallback();
+      };
+      try {
+        window.ksu.exec('am start --user 0 -a android.intent.action.VIEW -d "' + url + '"', '{}', cb);
+        return;
+      } catch (err) {}
+    }
+    fallback();
+  }
+
   function bind() {
     ['pointerdown', 'change'].forEach(function (evt) {
       document.addEventListener(evt, function () { lastInteract = Date.now(); }, true);
@@ -1001,6 +1031,7 @@
       var btn = e.target.closest('.tab');
       if (!btn) return;
       var tab = btn.getAttribute('data-tab');
+      if (tab === 'site') { openSite(e); return; }
       $$('.tab').forEach(function (t) { t.classList.toggle('on', t === btn); });
       $$('.page').forEach(function (p) { p.classList.toggle('on', p.id === 'page-' + tab); });
       var ind = $('#tabInd');

@@ -93,8 +93,8 @@
 
   /* 版本提示：update.json 比本页新时，顶部横幅自动切换 */
   (function () {
-    var SITE_VERSION = 'v2.2.1';
-    var SITE_CODE = 20201;
+    var SITE_VERSION = 'v2.2.2';
+    var SITE_CODE = 20202;
     var bar = document.getElementById('releaseBar');
     if (!bar) return;
     fetch('update.json', { cache: 'no-store' }).then(function (r) {

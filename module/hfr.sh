@@ -50,8 +50,8 @@ if [ -f "$MODDIR/module.prop" ]; then
         esac
     done < "$MODDIR/module.prop"
 fi
-[ -n "$VER" ] || VER=v2.2.1
-is_num "$VC" || VC=20201
+[ -n "$VER" ] || VER=v2.2.2
+is_num "$VC" || VC=20202
 
 [ -d "$DATA" ] || mkdir -p "$DATA" 2>/dev/null
 
