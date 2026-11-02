@@ -201,3 +201,83 @@
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(function () {});
 }
+
+/* ---------- background music ---------- */
+(function () {
+  var audio = document.getElementById('musicAudio');
+  var btn = document.getElementById('musicBtn');
+  var panel = document.getElementById('musicPanel');
+  var close = document.getElementById('musicClose');
+  var toggle = document.getElementById('musicToggle');
+  var next = document.getElementById('musicNext');
+  var prev = document.getElementById('musicPrev');
+  var title = document.getElementById('musicTitle');
+  var stateEl = document.getElementById('musicState');
+  var idxEl = document.getElementById('musicIdx');
+  if (!audio || !btn) return;
+
+  var tracks = [
+    { title: 'Night Drive', src: 'assets/music/night-drive.wav' },
+    { title: 'Glass Horizon', src: 'assets/music/glass-horizon.wav' },
+    { title: 'Neon Pulse', src: 'assets/music/neon-pulse.wav' }
+  ];
+  var idx = 0;
+  var needsGesture = false;
+  var started = false;
+
+  audio.volume = 0.32;
+  audio.preload = 'metadata';
+
+  function setState(txt) {
+    if (stateEl) stateEl.textContent = txt;
+    btn.classList.toggle('playing', !audio.paused);
+    if (toggle) toggle.classList.toggle('playing', !audio.paused);
+  }
+
+  function load(i, play) {
+    idx = (i + tracks.length) % tracks.length;
+    var t = tracks[idx];
+    audio.src = t.src;
+    audio.load();
+    if (title) title.textContent = t.title;
+    if (idxEl) idxEl.textContent = (idx + 1) + ' / ' + tracks.length;
+    if (play) playAudio();
+    else setState('已暂停');
+  }
+
+  function playAudio() {
+    var p = audio.play();
+    if (p && p.catch) {
+      p.catch(function () {
+        needsGesture = true;
+        setState('浏览器拦截 · 点击播放');
+      });
+    }
+  }
+
+  function togglePanel(show) {
+    if (!panel) return;
+    panel.hidden = show === false ? true : panel.hidden ? false : true;
+    if (!panel.hidden && !started) playAudio();
+  }
+
+  audio.addEventListener('play', function () { started = true; needsGesture = false; setState('正在播放'); });
+  audio.addEventListener('pause', function () { if (started) setState('已暂停'); });
+  audio.addEventListener('ended', function () { load(idx + 1, true); });
+  audio.addEventListener('error', function () { setState('音频加载失败'); });
+
+  btn.addEventListener('click', function () { togglePanel(); });
+  if (close) close.addEventListener('click', function () { panel.hidden = true; });
+  if (toggle) toggle.addEventListener('click', function () {
+    if (audio.paused) playAudio(); else audio.pause();
+  });
+  if (next) next.addEventListener('click', function () { load(idx + 1, true); });
+  if (prev) prev.addEventListener('click', function () { load(idx - 1, true); });
+
+  document.addEventListener('pointerdown', function () {
+    if (needsGesture) playAudio();
+  }, { once: true, capture: true });
+
+  load(0, true);
+})();
+
