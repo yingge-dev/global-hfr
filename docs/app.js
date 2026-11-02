@@ -223,9 +223,12 @@ if ('serviceWorker' in navigator) {
   var idx = 0;
   var needsGesture = false;
   var started = false;
+  var interacted = false;
+  var mutedAuto = false;
 
   audio.volume = 0.32;
-  audio.preload = 'metadata';
+  audio.preload = 'auto';
+  audio.setAttribute('playsinline', '');
 
   function setState(txt) {
     if (stateEl) stateEl.textContent = txt;
@@ -242,44 +245,99 @@ if ('serviceWorker' in navigator) {
     if (idxEl) idxEl.textContent = (idx + 1) + ' / ' + tracks.length;
     if (next) next.disabled = tracks.length < 2;
     if (prev) prev.disabled = tracks.length < 2;
-    if (stateEl && t.artist) stateEl.textContent = t.artist;
-    if (play) playAudio();
+    if (stateEl) stateEl.textContent = t.artist || '背景音乐';
+    if (play) startAudible();
     else setState('已暂停');
   }
 
-  function playAudio() {
+  function startAudible() {
+    audio.muted = false;
     var p = audio.play();
-    if (p && p.catch) {
-      p.catch(function () {
+    if (p && p.then) {
+      p.then(function () {
+        needsGesture = false;
+        mutedAuto = false;
+        setState('正在播放');
+      }).catch(function () {
         needsGesture = true;
-        setState('浏览器拦截 · 点击播放');
+        setState('点击播放');
       });
     }
+  }
+
+  function unmuteAndPlay() {
+    var wasMuted = audio.muted || mutedAuto;
+    audio.muted = false;
+    if (wasMuted) {
+      try { audio.currentTime = 0; } catch (e) {}
+    }
+    startAudible();
+  }
+
+  function tryAutoplay() {
+    var p = audio.play();
+    if (!p || !p.then) return;
+    p.then(function () {
+      started = true;
+      setState('正在播放');
+    }).catch(function () {
+      // 有声音自动播放被拦截时，先静音播放，把音频缓冲起来；第一次点击再瞬间开声
+      audio.muted = true;
+      var q = audio.play();
+      if (q && q.then) {
+        q.then(function () {
+          started = true;
+          mutedAuto = true;
+          needsGesture = true;
+          setState('点击开启声音');
+          if (interacted) unmuteAndPlay();
+        }).catch(function () {
+          needsGesture = true;
+          setState('点击播放');
+        });
+      } else {
+        needsGesture = true;
+        setState('点击播放');
+      }
+    });
   }
 
   function togglePanel(show) {
     if (!panel) return;
     panel.hidden = show === false ? true : panel.hidden ? false : true;
-    if (!panel.hidden && !started) playAudio();
+    if (!panel.hidden) {
+      if (audio.muted || mutedAuto) unmuteAndPlay();
+      else if (audio.paused) startAudible();
+    }
   }
 
-  audio.addEventListener('play', function () { started = true; needsGesture = false; setState('正在播放'); });
-  audio.addEventListener('pause', function () { if (started) setState('已暂停'); });
+  audio.addEventListener('play', function () {
+    started = true;
+    btn.classList.toggle('playing', true);
+    if (toggle) toggle.classList.toggle('playing', true);
+  });
+  audio.addEventListener('pause', function () {
+    if (started) setState(audio.muted ? '点击开启声音' : '已暂停');
+  });
   audio.addEventListener('ended', function () { load(idx + 1, true); });
   audio.addEventListener('error', function () { setState('音频加载失败'); });
 
   btn.addEventListener('click', function () { togglePanel(); });
   if (close) close.addEventListener('click', function () { panel.hidden = true; });
   if (toggle) toggle.addEventListener('click', function () {
-    if (audio.paused) playAudio(); else audio.pause();
+    if (audio.muted || mutedAuto) unmuteAndPlay();
+    else if (audio.paused) startAudible();
+    else audio.pause();
   });
   if (next) next.addEventListener('click', function () { load(idx + 1, true); });
   if (prev) prev.addEventListener('click', function () { load(idx - 1, true); });
 
+  // 第一次点击页面任意位置：如果有声音自动播放被拦截，立即开声并从 0 开始
   document.addEventListener('pointerdown', function () {
-    if (needsGesture) playAudio();
-  }, { once: true, capture: true });
+    interacted = true;
+    if (needsGesture || audio.muted || mutedAuto) unmuteAndPlay();
+  }, true);
 
-  load(0, true);
+  load(0, false);
+  tryAutoplay();
 })();
-
