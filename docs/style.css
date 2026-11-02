@@ -280,3 +280,5 @@ code{font-family:var(--mono);font-size:.86em;padding:2px 6px;border-radius:6px;b
   .release-bar{margin:76px 16px 0;padding:11px 13px}
   .release-bar em{display:none}
 }
+/* download counter */
+.tiny #dlTotal{color:var(--text);font-weight:750;font-variant-numeric:tabular-nums}

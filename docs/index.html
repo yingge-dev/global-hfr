@@ -50,7 +50,7 @@
       <h1>把高刷，<br><span>锁进系统底层。</span></h1>
       <p class="lead">真·全局高刷 v2.2.1。动态下限支持 30 / 60 / 90Hz，按面板上报自动识别；能力自检 + 多级回退，按机型选择可用的锁帧 / 动态接口；60–185Hz 固定档位，原生 / 自适应双动态引擎，静止降下限、触控回峰值。不是只写一个 <code>settings</code> 就自称全局。</p>
       <div class="cta">
-        <a class="btn blue" href="assets/global-hfr.zip?v=2.2.1" download="真·全局高刷.zip">
+        <a class="btn blue" href="https://github.com/yingge-dev/global-hfr/releases/latest/download/global-hfr.zip" download="真·全局高刷.zip">
           <svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></svg>
           下载模块
         </a>
@@ -59,7 +59,7 @@
           查看源码
         </a>
       </div>
-      <p class="tiny">免费 · 无广告 · 不收集数据 · 卸载自动还原系统设置</p>
+      <p class="tiny">免费 · 无广告 · 不收集数据 · <span title="GitHub Release 下载次数，重复下载会重复计数，不等于独立用户数">已下载 <b id="dlTotal">--</b> 次</span></p>
     </div>
 
     <div class="hero-visual" aria-hidden="true">
@@ -74,7 +74,7 @@
     <div><b>60–185<span>Hz</span></b><em>固定档位</em></div>
     <div><b>3<span>层</span></b><em>锁帧 + 回读核验</em></div>
     <div><b>0<span>个</span></b><em>虚假高刷档位</em></div>
-    <div><b>1<span>键</span></b><em>恢复系统默认</em></div>
+    <div title="GitHub Release 下载次数，重复下载会重复计数"><b id="dlStat">--</b><em>累计下载</em></div>
   </section>
 
   <section class="section" id="features">
@@ -167,7 +167,7 @@
       <div class="step card reveal"><b>03</b><h3>打开 WebUI</h3><p>KernelSU / APatch 模块页直接开；Magisk 安装 KsuWebUI 并授予 Root。</p></div>
     </div>
     <div class="install-cta reveal">
-      <a class="btn blue big" href="assets/global-hfr.zip?v=2.2.1" download="真·全局高刷.zip">下载 真·全局高刷.zip</a>
+      <a class="btn blue big" href="https://github.com/yingge-dev/global-hfr/releases/latest/download/global-hfr.zip" download="真·全局高刷.zip">下载 真·全局高刷.zip</a>
       <span>Android 11+ · 约 41 KB · v2.2.1</span>
     </div>
   </section>
@@ -282,6 +282,7 @@
       <h2>先把话说明白。</h2>
     </div>
     <div class="faq">
+      <details class="reveal"><summary>下载数是怎么统计的？</summary><p>来自 GitHub Release 资产下载次数，包含网页下载和模块管理器更新下载；同一人重复下载会重复计数，不等于独立用户数。页面没有额外统计脚本，也不收集设备信息。</p></details>
       <details class="reveal"><summary>为什么我的 144 / 165 / 185Hz 是灰的？</summary><p>模块只能锁定设备真实存在的显示模式。面板原生 120Hz 的机器不会凭空出现 144/165/185；刷了超频 DTBO 并被扫描到，才会出现并标注 OC。没有的档位不会假装支持。</p></details>
       <details class="reveal"><summary>会不会和 dfps、Astra 之类的高刷模块冲突？</summary><p>会。它们都在改 peak_refresh_rate 和 SurfaceFlinger 策略，同时开会互相覆盖，表现为跳档、锁不住、耗电异常。请只保留一个。</p></details>
       <details class="reveal"><summary>为什么动态区间静止时会掉到很低？</summary><p>把下限设为 10/30 时，LTPO 在静态画面会进入低刷新率省电，这是正常的；希望静止也保持 60，把下限设为 60 即可。</p></details>
@@ -302,7 +303,7 @@
       <h2>真·全局高刷</h2>
       <p>小米 / OPPO / 一加全平台 · 60–185Hz · 动态刷新 · 触控增强</p>
       <div class="cta center">
-        <a class="btn blue" href="assets/global-hfr.zip?v=2.2.1" download="真·全局高刷.zip">下载模块</a>
+        <a class="btn blue" href="https://github.com/yingge-dev/global-hfr/releases/latest/download/global-hfr.zip" download="真·全局高刷.zip">下载模块</a>
         <a class="btn glass" data-repo href="https://github.com/yingge-dev/global-hfr" target="_blank" rel="noopener">GitHub</a>
       </div>
       <p class="tiny">作者：颖哥 · MIT License · 刷机有风险，请先备份</p>

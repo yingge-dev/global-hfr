@@ -110,4 +110,40 @@
       if (a) a.href = j.changelog || '#changelog';
     }).catch(function () {});
   })();
+
+  /* GitHub Release 下载次数：所有 release 的 global-hfr.zip 累加，缓存 10 分钟 */
+  (function () {
+    var el = document.getElementById('dlTotal');
+    if (!el) return;
+    var KEY = 'hfr_dl_total_v1';
+    var cached = null;
+    try { cached = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) {}
+    var stat = document.getElementById('dlStat');
+    function paint(n) {
+      var txt;
+      try { txt = Number(n || 0).toLocaleString('zh-CN'); }
+      catch (e) { txt = String(n || 0); }
+      el.textContent = txt;
+      if (stat) stat.textContent = txt;
+    }
+    if (cached && cached.total != null && Date.now() - cached.ts < 600000) {
+      paint(cached.total);
+      return;
+    }
+    fetch('https://api.github.com/repos/yingge-dev/global-hfr/releases?per_page=100', { cache: 'no-store' })
+      .then(function (r) { if (!r.ok) throw new Error('http ' + r.status); return r.json(); })
+      .then(function (list) {
+        var total = 0;
+        (list || []).forEach(function (rel) {
+          if (rel.draft) return;
+          (rel.assets || []).forEach(function (a) {
+            if (a.name === 'global-hfr.zip') total += Number(a.download_count) || 0;
+          });
+        });
+        try { localStorage.setItem(KEY, JSON.stringify({ ts: Date.now(), total: total })); } catch (e) {}
+        paint(total);
+      })
+      .catch(function () { if (cached && cached.total != null) paint(cached.total); });
+  })();
+
 })();
