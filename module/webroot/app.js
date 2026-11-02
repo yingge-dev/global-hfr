@@ -77,8 +77,8 @@
   var DEMO = {
     ok: 1,
     ts: Math.floor(Date.now() / 1000),
-    version: 'v2.2.2',
-    versionCode: 20202,
+    version: 'v2.2.3',
+    versionCode: 20203,
     device: {
       brand: 'OnePlus', model: 'PJZ110', market: 'OnePlus 13',
       rom: 'ColorOS 15.0.1', android: '15', sdk: 35,
@@ -621,11 +621,12 @@
     if (!j) { toast('暂无更新信息，请先检查更新', 'err'); return; }
     var link = isUrl(j.changelog) ? j.changelog : '';
     var dl = '';
+    var home = 'https://yingge-dev.github.io/global-hfr/#install';
     if (isUrl(j.zipUrl)) {
-      dl += '<a class="btn" href="' + esc(j.zipUrl) + '" target="_blank" rel="noopener">下载 ' + esc(j.version || '') + '</a>';
+      dl += '<a class="btn" href="' + esc(j.zipUrl) + '" target="_blank" rel="noopener" data-external="' + esc(j.zipUrl) + '" data-fallback="' + esc(home) + '">浏览器下载 ' + esc(j.version || '') + '</a>';
     }
     if (link) {
-      dl += '<a class="btn ghost" href="' + esc(link) + '" target="_blank" rel="noopener">GitHub 发布页</a>';
+      dl += '<a class="btn ghost" href="' + esc(link) + '" target="_blank" rel="noopener" data-external="' + esc(link) + '">GitHub 发布页</a>';
     }
     dl = '<div class="sheet-actions">' + dl + '</div>';
 
@@ -818,34 +819,40 @@
     return b ? b.getAttribute('data-engine') : 'auto';
   }
 
-  function openSite(e) {
+  function openExternal(url, e, failUrl) {
     if (e) e.preventDefault();
-    var url = 'https://yingge-dev.github.io/global-hfr/';
-    function fallback() {
+    function fallback(u) {
       try {
         var a = document.createElement('a');
-        a.href = url;
+        a.href = u;
         a.target = '_blank';
         a.rel = 'noopener';
         document.body.appendChild(a);
         a.click();
-        setTimeout(function () { try { a.remove(); } catch (e) {} }, 0);
+        setTimeout(function () { try { a.remove(); } catch (e2) {} }, 0);
       } catch (err) {
-        try { location.href = url; } catch (e2) {}
+        try { location.href = u; } catch (e3) {}
       }
     }
     if (window.ksu && typeof window.ksu.exec === 'function') {
-      var cb = '__hfr_site_' + Date.now();
+      var cb = '__hfr_ext_' + Date.now();
       window[cb] = function (errno) {
         try { delete window[cb]; } catch (err) {}
-        if (errno != null && Number(errno) !== 0) fallback();
+        if (errno != null && Number(errno) !== 0) {
+          if (failUrl && failUrl !== url) openExternal(failUrl);
+          else fallback(url);
+        }
       };
       try {
         window.ksu.exec('am start --user 0 -a android.intent.action.VIEW -d "' + url + '"', '{}', cb);
         return;
       } catch (err) {}
     }
-    fallback();
+    fallback(failUrl && failUrl !== url ? failUrl : url);
+  }
+
+  function openSite(e) {
+    openExternal('https://yingge-dev.github.io/global-hfr/', e);
   }
 
   function bind() {
@@ -1041,6 +1048,11 @@
 
     $('#scrim').addEventListener('click', closeSheet);
     $('#sheet').addEventListener('click', function (e) {
+      var ext = e.target.closest('[data-external]');
+      if (ext) {
+        openExternal(ext.getAttribute('data-external'), e, ext.getAttribute('data-fallback') || '');
+        return;
+      }
       if (e.target.closest('[data-close]')) closeSheet();
       if (e.target.id === 'doRestore') {
         closeSheet();
