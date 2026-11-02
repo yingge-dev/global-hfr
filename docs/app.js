@@ -111,11 +111,11 @@
     }).catch(function () {});
   })();
 
-  /* GitHub Release 下载次数：所有 release 的 global-hfr.zip 累加，缓存 10 分钟 */
+  /* GitHub Release 下载次数：优先读同源 downloads.json 快照，再用 API 刷新 */
   (function () {
     var el = document.getElementById('dlTotal');
     if (!el) return;
-    var KEY = 'hfr_dl_total_v1';
+    var KEY = 'hfr_dl_total_v2';
     var cached = null;
     try { cached = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) {}
     var stat = document.getElementById('dlStat');
@@ -126,10 +126,18 @@
       el.textContent = txt;
       if (stat) stat.textContent = txt;
     }
-    if (cached && cached.total != null && Date.now() - cached.ts < 600000) {
-      paint(cached.total);
-      return;
-    }
+    if (cached && cached.total != null) paint(cached.total);
+
+    // 同源快照：即使 api.github.com 被限流/不可达，页面也有数字
+    fetch('downloads.json?ts=' + Date.now(), { cache: 'no-store' })
+      .then(function (r) { if (!r.ok) throw new Error('http ' + r.status); return r.json(); })
+      .then(function (snap) {
+        if (snap && snap.total != null) paint(snap.total);
+      })
+      .catch(function () {});
+
+    if (cached && cached.total != null && Date.now() - cached.ts < 600000) return;
+
     fetch('https://api.github.com/repos/yingge-dev/global-hfr/releases?per_page=100', { cache: 'no-store' })
       .then(function (r) { if (!r.ok) throw new Error('http ' + r.status); return r.json(); })
       .then(function (list) {
@@ -143,7 +151,7 @@
         try { localStorage.setItem(KEY, JSON.stringify({ ts: Date.now(), total: total })); } catch (e) {}
         paint(total);
       })
-      .catch(function () { if (cached && cached.total != null) paint(cached.total); });
+      .catch(function () {});
   })();
 
 })();
