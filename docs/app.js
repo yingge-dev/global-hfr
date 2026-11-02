@@ -219,7 +219,8 @@ if ('serviceWorker' in navigator) {
   var tracks = [
     { title: '唐人恋曲 (DJ版)', artist: 'DJ大圣', src: 'assets/music/tangren-lianqu-dj.mp3' },
     { title: '红尘客栈 (DJ版)', artist: 'DJ冷冰冰', src: 'assets/music/hongchen-kz-dj.mp3' },
-    { title: '梦的翅膀受了伤 (Remix)', artist: 'Remix', src: 'assets/music/mengde-chibang-remix.mp3' }
+    { title: '梦的翅膀受了伤 (Remix)', artist: 'Remix', src: 'assets/music/mengde-chibang-remix.mp3' },
+    { title: '天青色等烟雨', artist: '—', src: 'assets/music/tianqingse-dengyanyu.mp3' }
   ];
   var idx = 0;
   var history = [];
