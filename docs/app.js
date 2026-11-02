@@ -316,6 +316,12 @@ if ('serviceWorker' in navigator) {
     btn.classList.toggle('playing', true);
     if (toggle) toggle.classList.toggle('playing', true);
   });
+  audio.addEventListener('waiting', function () {
+    if (!audio.paused && !audio.muted) setState('缓冲中…');
+  });
+  audio.addEventListener('playing', function () {
+    if (!audio.muted) setState('正在播放');
+  });
   audio.addEventListener('pause', function () {
     if (started) setState(audio.muted ? '点击开启声音' : '已暂停');
   });
