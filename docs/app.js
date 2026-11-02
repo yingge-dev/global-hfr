@@ -145,7 +145,7 @@
         (list || []).forEach(function (rel) {
           if (rel.draft) return;
           (rel.assets || []).forEach(function (a) {
-            if (a.name === 'global-hfr.zip') total += Number(a.download_count) || 0;
+            if (a.name === 'global-hfr.zip' || a.name === 'zhen-quanju-gaoshu.zip') total += Number(a.download_count) || 0;
           });
         });
         try { localStorage.setItem(KEY, JSON.stringify({ ts: Date.now(), total: total })); } catch (e) {}

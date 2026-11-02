@@ -18,7 +18,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/yingge-dev/global-hfr/releases/latest/download/global-hfr.zip"><b>⬇ 下载模块</b></a>
+  <a href="docs/assets/真·全局高刷.zip"><b>⬇ 下载模块</b></a>
   &nbsp;·&nbsp;
   <a href="https://yingge-dev.github.io/global-hfr/">项目主页</a>
   &nbsp;·&nbsp;
@@ -110,7 +110,7 @@ WebUI 里可选「自动 / 原生 / 自适应」，自动会按机型、能力�
 
 ## 安装
 
-1. 下载 [`global-hfr.zip`](https://github.com/yingge-dev/global-hfr/releases/latest/download/global-hfr.zip)；
+1. 下载 [`真·全局高刷.zip`](docs/assets/真·全局高刷.zip)；
 2. 在 **Magisk / KernelSU / APatch** 管理器中选择「从本地安装」；
 3. 重启手机；
 4. 打开 WebUI 选择固定档位或动态区间 / 触控。
