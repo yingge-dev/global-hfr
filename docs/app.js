@@ -111,29 +111,72 @@
     }).catch(function () {});
   })();
 
-  /* GitHub Release 下载次数：优先读同源 downloads.json 快照，再用 API 刷新 */
+  /* 下载总数 = GitHub Release 下载 + 网页下载实时计数（Abacus） */
   (function () {
     var el = document.getElementById('dlTotal');
     if (!el) return;
-    var KEY = 'hfr_dl_total_v2';
-    var cached = null;
-    try { cached = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) {}
     var stat = document.getElementById('dlStat');
-    function paint(n) {
+    var GH_KEY = 'hfr_dl_gh_v3';
+    var ghTotal = 0;
+    var pageTotal = 0;
+    var PAGE_BASE = 'https://abacus.jasoncameron.dev';
+    var PAGE_PATH = '/yingge-dev/global-hfr-page-downloads-v1';
+
+    function paint() {
+      var total = ghTotal + pageTotal;
       var txt;
-      try { txt = Number(n || 0).toLocaleString('zh-CN'); }
-      catch (e) { txt = String(n || 0); }
+      try { txt = Number(total || 0).toLocaleString('zh-CN'); }
+      catch (e) { txt = String(total || 0); }
       el.textContent = txt;
       if (stat) stat.textContent = txt;
     }
-    if (cached && cached.total != null) paint(cached.total);
 
-    // 同源快照：即使 api.github.com 被限流/不可达，页面也有数字
+    function setGh(n) {
+      ghTotal = Number(n) || 0;
+      paint();
+    }
+
+    function setPage(n) {
+      pageTotal = Math.max(pageTotal, Number(n) || 0);
+      paint();
+    }
+
+    function pageGet() {
+      fetch(PAGE_BASE + '/get' + PAGE_PATH, { cache: 'no-store' })
+        .then(function (r) { return r.json(); })
+        .then(function (j) { if (j && j.value != null) setPage(j.value); })
+        .catch(function () {});
+    }
+
+    function pageHit() {
+      fetch(PAGE_BASE + '/hit' + PAGE_PATH, { cache: 'no-store', keepalive: true })
+        .then(function (r) { return r.json(); })
+        .then(function (j) { if (j && j.value != null) setPage(j.value); })
+        .catch(function () {});
+    }
+
+    // 点击下载时计数；不阻止浏览器下载
+    function onDownload(e) {
+      var t = e.target;
+      var a = t && t.closest ? t.closest('a[data-dl]') : null;
+      if (a) pageHit();
+    }
+    document.addEventListener('click', onDownload, true);
+    document.addEventListener('auxclick', onDownload, true);
+
+    pageGet();
+    setInterval(function () {
+      if (document.visibilityState !== 'hidden') pageGet();
+    }, 5000);
+
+    var cached = null;
+    try { cached = JSON.parse(localStorage.getItem(GH_KEY) || 'null'); } catch (e) {}
+    if (cached && cached.total != null) setGh(cached.total);
+
+    // 同源快照：api.github.com 不可达时也有 GitHub 下载数
     fetch('downloads.json?ts=' + Date.now(), { cache: 'no-store' })
       .then(function (r) { if (!r.ok) throw new Error('http ' + r.status); return r.json(); })
-      .then(function (snap) {
-        if (snap && snap.total != null) paint(snap.total);
-      })
+      .then(function (snap) { if (snap && snap.total != null) setGh(snap.total); })
       .catch(function () {});
 
     if (cached && cached.total != null && Date.now() - cached.ts < 600000) return;
@@ -148,10 +191,13 @@
             if (a.name === 'global-hfr.zip' || a.name === 'zhen-quanju-gaoshu.zip') total += Number(a.download_count) || 0;
           });
         });
-        try { localStorage.setItem(KEY, JSON.stringify({ ts: Date.now(), total: total })); } catch (e) {}
-        paint(total);
+        try { localStorage.setItem(GH_KEY, JSON.stringify({ ts: Date.now(), total: total })); } catch (e) {}
+        setGh(total);
       })
       .catch(function () {});
   })();
-
 })();
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(function () {});
+}
