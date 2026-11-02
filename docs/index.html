@@ -315,7 +315,6 @@
       <h2>先把话说明白。</h2>
     </div>
     <div class="faq">
-      <details class="reveal"><summary>下载数是怎么统计的？</summary><p>总下载 = GitHub Release 下载次数 + 网页下载实时计数。GitHub 部分包含模块管理器更新和 GitHub 直链；网页部分在点击「真·全局高刷.zip」或直接访问该 zip 时计数，约 5 秒刷新。同一人重复下载会重复计数，不等于独立用户数；计数服务只记录总数，不收集设备或身份信息。</p></details>
       <details class="reveal"><summary>为什么我的 144 / 165 / 185Hz 是灰的？</summary><p>模块只能锁定设备真实存在的显示模式。面板原生 120Hz 的机器不会凭空出现 144/165/185；刷了超频 DTBO 并被扫描到，才会出现并标注 OC。没有的档位不会假装支持。</p></details>
       <details class="reveal"><summary>会不会和 dfps、Astra 之类的高刷模块冲突？</summary><p>会。它们都在改 peak_refresh_rate 和 SurfaceFlinger 策略，同时开会互相覆盖，表现为跳档、锁不住、耗电异常。请只保留一个。</p></details>
       <details class="reveal"><summary>为什么动态区间静止时会掉到很低？</summary><p>把下限设为 10/30 时，LTPO 在静态画面会进入低刷新率省电，这是正常的；希望静止也保持 60，把下限设为 60 即可。</p></details>
