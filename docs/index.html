@@ -454,6 +454,33 @@
 </footer>
 
 <div class="lightbox" id="lightbox" aria-hidden="true"><img alt=""><button aria-label="关闭">×</button></div>
-<script src="app.js?v=20261102k"></script>
+<button class="assistant-fab" id="assistantFab" type="button" aria-label="打开高刷助手">
+  <svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg>
+  <span>助手</span>
+</button>
+
+<div class="assistant-panel" id="assistantPanel" hidden>
+  <div class="assistant-head">
+    <div class="assistant-title"><span class="assistant-mark">颖</span><div><b>高刷助手</b><em>本地规则回复 · 不联网</em></div></div>
+    <button type="button" class="assistant-close" id="assistantClose" aria-label="关闭">×</button>
+  </div>
+  <div class="assistant-msgs" id="assistantMsgs"></div>
+  <div class="assistant-quick" id="assistantQuick">
+    <button type="button" data-q="怎么安装">怎么安装</button>
+    <button type="button" data-q="锁不住">锁不住</button>
+    <button type="button" data-q="掉60">掉 60</button>
+    <button type="button" data-q="30Hz">30Hz</button>
+    <button type="button" data-q="触控节点">触控</button>
+    <button type="button" data-q="反馈">反馈 Bug</button>
+  </div>
+  <form class="assistant-form" id="assistantForm">
+    <input id="assistantInput" type="text" autocomplete="off" placeholder="描述你的问题…" aria-label="输入问题">
+    <button type="submit" aria-label="发送">↑</button>
+  </form>
+</div>
+
+<script src="assistant.js?v=20261103a"></script>
+
+<script src="app.js?v=20261103a"></script>
 </body>
 </html>
