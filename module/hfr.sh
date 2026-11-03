@@ -50,8 +50,8 @@ if [ -f "$MODDIR/module.prop" ]; then
         esac
     done < "$MODDIR/module.prop"
 fi
-[ -n "$VER" ] || VER=v2.2.4
-is_num "$VC" || VC=20204
+[ -n "$VER" ] || VER=v2.2.5
+is_num "$VC" || VC=20205
 
 [ -d "$DATA" ] || mkdir -p "$DATA" 2>/dev/null
 
@@ -417,6 +417,16 @@ scan_modes() {
 
     awk -F'\t' '!seen[$1]++' "$tmp" 2>/dev/null | sort -k4,4n > "$MODES.tmp" 2>/dev/null
     rm -f "$tmp"
+    # 过滤明显不可能的显示档位（例如虚拟显示/误读的 360Hz）；保留 240Hz 以内的真实档位
+    if [ -s "$MODES.tmp" ]; then
+        awk -F'\t' '$4 + 0 <= 240' "$MODES.tmp" > "$MODES.tmp2" 2>/dev/null
+        if [ -s "$MODES.tmp2" ]; then
+            mv -f "$MODES.tmp2" "$MODES.tmp"
+        else
+            rm -f "$MODES.tmp"
+        fi
+        rm -f "$MODES.tmp2"
+    fi
     if [ -s "$MODES.tmp" ]; then
         mv -f "$MODES.tmp" "$MODES"
         mx=$(awk -F'\t' 'BEGIN{m=0} {if ($4+0 > m) m=$4+0} END{if (m>0) printf "%.0f", m}' "$MODES" 2>/dev/null)
@@ -437,6 +447,10 @@ scan_modes() {
 ensure_panel() {
     [ -s "$MODES" ] || return 1
     if [ -f "$PANEL" ]; then
+        pm=$(max_hz 2>/dev/null)
+        if is_num "$pm" && [ "$pm" -gt 240 ] 2>/dev/null; then
+            scan_modes
+        fi
         has_native=0; has_rates=0
         while IFS='=' read -r k v; do
             [ "$k" = "native" ] && has_native=1
@@ -519,7 +533,7 @@ detect_rates() {
             for (i = 1; i <= n; i++) {
                 gsub(/[^0-9.]/, "", a[i])
                 f = a[i] + 0
-                if (f >= 1 && f <= 400) printf "%.0f\n", f
+                if (f >= 1 && f <= 240) printf "%.0f\n", f
             }
             exit
         }' | sort -n | awk '!seen[$1]++ { if (out != "") out = out ","; out = out $1 } END { if (out != "") print out }')
@@ -532,6 +546,10 @@ detect_rates() {
 refresh_native_cap() {
     [ -s "$MODES" ] || return 1
     mx=$(max_hz); [ -n "$mx" ] || return 1
+    if [ "$mx" -gt 240 ] 2>/dev/null; then
+        scan_modes
+        mx=$(max_hz); [ -n "$mx" ] || return 1
+    fi
     nm=$(dumpsys display 2>/dev/null | sed -n 's/.*mLockedMaxRefreshRate: \([0-9.]*\).*/\1/p' | head -n 1)
     nm=${nm%%.*}
     is_num "$nm" || nm=0
