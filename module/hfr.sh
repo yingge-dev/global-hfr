@@ -50,8 +50,8 @@ if [ -f "$MODDIR/module.prop" ]; then
         esac
     done < "$MODDIR/module.prop"
 fi
-[ -n "$VER" ] || VER=v2.2.3
-is_num "$VC" || VC=20203
+[ -n "$VER" ] || VER=v2.2.4
+is_num "$VC" || VC=20204
 
 [ -d "$DATA" ] || mkdir -p "$DATA" 2>/dev/null
 
@@ -674,11 +674,12 @@ apply_fixed_mode() {
             if [ -n "$cc" ] && [ $((cc - mhz)) -le 2 ] 2>/dev/null && [ $((mhz - cc)) -le 2 ] 2>/dev/null; then
                 method="SurfaceFlinger mode $mid"
                 verified=1
+                return 0
             else
                 method="SurfaceFlinger mode $mid（未确认）"
                 verified=0
+                rm -f "$SFLAG" 2>/dev/null
             fi
-            return 0
         fi
     fi
 
@@ -704,11 +705,12 @@ apply_fixed_mode() {
             if [ -n "$cc" ] && [ $((cc - mhz)) -le 2 ] 2>/dev/null && [ $((mhz - cc)) -le 2 ] 2>/dev/null; then
                 method="SurfaceFlinger mode $mid"
                 verified=1
+                return 0
             else
                 method="SurfaceFlinger mode $mid（未确认）"
                 verified=0
+                rm -f "$SFLAG" 2>/dev/null
             fi
-            return 0
         fi
     fi
 
@@ -1335,15 +1337,23 @@ run_daemon() {
             continue
         fi
 
-        sleep 5
+        if [ "$profile" = "fixed" ]; then sleep 2; else sleep 5; fi
         tick=$((tick + 1))
         if screen_on; then
             if [ "$prev_screen" != "on" ]; then
                 apply_all
                 tick=0
-            elif [ "$profile" = "fixed" ] && [ "$((tick % 6))" -eq 0 ]; then
-                set -- $(pick_mode "$target_hz")
-                [ -n "$1" ] && sf_set "$1" >/dev/null 2>&1
+            elif [ "$profile" = "fixed" ]; then
+                fhz=$fixed_hz
+                if ! is_num "$fhz" || [ "$fhz" -le 0 ] 2>/dev/null; then fhz=$target_hz; fi
+                if is_num "$fhz" && [ "$fhz" -gt 0 ] 2>/dev/null; then
+                    nowhz=$(read_active_hz)
+                    if [ -z "$nowhz" ] || [ "$nowhz" != "$fhz" ]; then
+                        apply_fixed_mode "$fhz" >/dev/null 2>&1
+                        curhz=$(read_active_hz)
+                        write_state "$curhz" 2>/dev/null
+                    fi
+                fi
             elif [ "$profile" = "dynamic" ] && [ "$engine" = "native" ] && [ "$((tick % 3))" -eq 0 ]; then
                 lo=$dyn_min; hi=$dyn_max
                 if ! is_num "$hi" || [ "$hi" -eq 0 ]; then hi=$(max_hz); fi

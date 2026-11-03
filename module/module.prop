@@ -1,7 +1,7 @@
 id=global_hfr
 name=真·全局高刷
-version=v2.2.3
-versionCode=20203
+version=v2.2.4
+versionCode=20204
 author=颖哥
 description=真·全局高刷 · 小米/OPPO/一加/realme 与通用机型 · 动态下限 30/60/90 按面板识别 · 能力自检 + 多级回退 · 原生/自适应动态 · WebUI
 updateJson=https://raw.githubusercontent.com/yingge-dev/global-hfr/main/update.json

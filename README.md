@@ -2,7 +2,7 @@
   <img src="screenshots/01_封面.png" alt="真·全局高刷" width="100%">
 </p>
 
-<h1 align="center">真·全局高刷 v2.2.3</h1>
+<h1 align="center">真·全局高刷 v2.2.4</h1>
 
 <p align="center">
   小米 / OPPO / 一加 / realme 与通用骁龙 · 天玑机型<br>
@@ -28,6 +28,15 @@
 </p>
 
 ---
+
+## v2.2.4 更新了什么
+
+修复固定档的两个真实问题：
+
+- 底层锁回读失败后继续走 DisplayManager / Settings，不再直接停在「未确认」。
+- 固定档每 5 秒检查实际刷新率，抖音 / B 站等掉 60 后自动重新锁定。
+- 给小米 MIX Flip 2 这类 1035 不生效的折叠屏机型留出设置回退路径。
+- 代码审计：`node --check` / `bash -n` 通过。
 
 ## v2.2.3 更新了什么
 

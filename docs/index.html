@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#eef3fa" id="themeColor">
-<meta name="description" content="真·全局高刷 v2.2.3：小米 / OPPO / 一加 / realme 与通用机型，能力自检 + 多级回退，60–185Hz 固定档位，原生 / 自适应动态刷新率，触控加速与玻璃拟态 WebUI。">
+<meta name="description" content="真·全局高刷 v2.2.4：小米 / OPPO / 一加 / realme 与通用机型，能力自检 + 多级回退，60–185Hz 固定档位，原生 / 自适应动态刷新率，触控加速与玻璃拟态 WebUI。">
 <title>真·全局高刷 · 小米 / OPPO / 一加全平台</title>
 <link rel="stylesheet" href="style.css?v=20261102f">
 
@@ -74,16 +74,16 @@
 <main id="top">
   <div class="release-bar" id="releaseBar">
     <span class="rb-dot"></span>
-    <div><b id="releaseTitle">v2.2.3 已发布</b><em id="releaseDesc">更新弹窗下载按钮改为浏览器打开</em></div>
+    <div><b id="releaseTitle">v2.2.4 已发布</b><em id="releaseDesc">固定档回退与掉 60 自动恢复</em></div>
     <a href="#changelog">更新内容 →</a>
   </div>
   <section class="hero">
     <div class="hero-copy">
-      <span class="eyebrow"><i></i> v2.2.3 · Android 11+ · Magisk / KernelSU / APatch</span>
+      <span class="eyebrow"><i></i> v2.2.4 · Android 11+ · Magisk / KernelSU / APatch</span>
       <h1>把高刷，<br><span>锁进系统底层。</span></h1>
-      <p class="lead">真·全局高刷 v2.2.3。动态下限支持 30 / 60 / 90Hz，按面板上报自动识别；能力自检 + 多级回退，按机型选择可用的锁帧 / 动态接口；60–185Hz 固定档位，原生 / 自适应双动态引擎，静止降下限、触控回峰值。不是只写一个 <code>settings</code> 就自称全局。</p>
+      <p class="lead">真·全局高刷 v2.2.4。动态下限支持 30 / 60 / 90Hz，按面板上报自动识别；能力自检 + 多级回退，按机型选择可用的锁帧 / 动态接口；60–185Hz 固定档位，原生 / 自适应双动态引擎，静止降下限、触控回峰值。不是只写一个 <code>settings</code> 就自称全局。</p>
       <div class="cta">
-        <a class="btn blue" href="assets/真·全局高刷.zip?v=2.2.3&amp;src=page" download="真·全局高刷.zip" data-dl="hfr">
+        <a class="btn blue" href="assets/真·全局高刷.zip?v=2.2.4&amp;src=page" download="真·全局高刷.zip" data-dl="hfr">
           <svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></svg>
           下载模块
         </a>
@@ -200,16 +200,35 @@
       <div class="step card reveal"><b>03</b><h3>打开 WebUI</h3><p>KernelSU / APatch 模块页直接开；Magisk 安装 KsuWebUI 并授予 Root。</p></div>
     </div>
     <div class="install-cta reveal">
-      <a class="btn blue big" href="assets/真·全局高刷.zip?v=2.2.3&amp;src=page" download="真·全局高刷.zip" data-dl="hfr">下载 真·全局高刷.zip</a>
-      <span>Android 11+ · 约 42 KB · v2.2.3</span>
+      <a class="btn blue big" href="assets/真·全局高刷.zip?v=2.2.4&amp;src=page" download="真·全局高刷.zip" data-dl="hfr">下载 真·全局高刷.zip</a>
+      <span>Android 11+ · 约 42 KB · v2.2.4</span>
     </div>
   </section>
 
   <section class="section" id="changelog">
     <div class="sec-head reveal">
       <span class="eyebrow"><i></i> CHANGELOG</span>
-      <h2>v2.2.3<br>下载按钮修复。</h2>
-      <p>更新弹窗的「浏览器下载」和「GitHub 发布页」不再用普通链接，统一走外部浏览器；下载失败回退项目主页安装区。</p>
+      <h2>v2.2.4<br>掉 60 自动拉回。</h2>
+      <p>固定档底层锁回读失败时不再直接结束，继续走 DisplayManager / Settings；守护进程每 5 秒检查一次，掉 60 自动重新锁定。</p>
+    </div>
+    <div class="lock-card card reveal" style="margin-bottom:20px">
+      <div class="lock-row">
+        <span class="num">01</span>
+        <div><b>固定档失败继续回退</b><p>SurfaceFlinger 底层锁回读不到目标刷新率时，不再直接返回「未确认」；继续尝试 DisplayManager 和标准 Settings，最后才标记兼容模式。</p></div>
+      </div>
+      <div class="lock-row">
+        <span class="num">02</span>
+        <div><b>掉 60 自动拉回</b><p>固定档守护从 30 秒一次改为每 5 秒检查实际刷新率；抖音、B 站等应用把帧率压到 60 时，自动重新应用固定档。</p></div>
+      </div>
+      <div class="lock-row">
+        <span class="num">03</span>
+        <div><b>折叠屏 / 多显示模式更稳</b><p>底层模式回读失败时不再卡死，给小米 MIX Flip 2 这类 1035 不生效的机型留出设置与 DisplayManager 回退路径。</p></div>
+      </div>
+      <p class="lock-note">v2.2.4 只改固定档回退与守护频率，不动动态下限识别。</p>
+    </div>
+    <div class="sec-head reveal" style="padding-top:6px">
+      <span class="eyebrow">v2.2.3</span>
+      <h2 style="font-size:24px">下载按钮修复</h2>
     </div>
     <div class="lock-card card reveal" style="margin-bottom:20px">
       <div class="lock-row">
@@ -373,7 +392,7 @@
       <h2>真·全局高刷</h2>
       <p>小米 / OPPO / 一加全平台 · 60–185Hz · 动态刷新 · 触控增强</p>
       <div class="cta center">
-        <a class="btn blue" href="assets/真·全局高刷.zip?v=2.2.3&amp;src=page" download="真·全局高刷.zip" data-dl="hfr">下载模块</a>
+        <a class="btn blue" href="assets/真·全局高刷.zip?v=2.2.4&amp;src=page" download="真·全局高刷.zip" data-dl="hfr">下载模块</a>
         <a class="btn glass" data-repo href="https://github.com/yingge-dev/global-hfr" target="_blank" rel="noopener">GitHub</a>
       </div>
       <p class="tiny">作者：颖哥 · MIT License · 刷机有风险，请先备份</p>
