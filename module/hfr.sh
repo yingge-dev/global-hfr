@@ -50,8 +50,8 @@ if [ -f "$MODDIR/module.prop" ]; then
         esac
     done < "$MODDIR/module.prop"
 fi
-[ -n "$VER" ] || VER=v2.2.5
-is_num "$VC" || VC=20205
+[ -n "$VER" ] || VER=v2.2.6
+is_num "$VC" || VC=20206
 
 [ -d "$DATA" ] || mkdir -p "$DATA" 2>/dev/null
 
@@ -669,9 +669,17 @@ apply_fixed_mode() {
     set -- $(pick_mode "$t")
     mid=$1; mhz=$2
     if [ -z "$mid" ]; then
-        method="未检测到 ${t}Hz 档位"
-        log "$method"
-        return 1
+        # 有些 HyperOS / LTPO 面板把 60Hz 作为设置层速率，不暴露为独立 SF 模式；
+        # 只要系统上报支持，就允许用 Settings 固定，不再直接判“无档位”。
+        rates=$(panel_rates)
+        case ",$rates," in
+            *",$t,"*) mhz=$t ;;
+            *)
+                method="未检测到 ${t}Hz 档位"
+                log "$method"
+                return 1
+                ;;
+        esac
     fi
     backup_orig
     settings put system min_refresh_rate "$mhz" >/dev/null 2>&1 &
@@ -684,7 +692,7 @@ apply_fixed_mode() {
     verified=0
 
     # Xiaomi / HyperOS: the vendor backdoor is the only reliable hard lock.
-    if [ "$deep_lock" = "1" ] && [ "$CAN_SF" = "1" ]; then
+    if [ "$deep_lock" = "1" ] && [ "$CAN_SF" = "1" ] && [ -n "$mid" ]; then
         if sf_set "$mid"; then
             : > "$SFLAG" 2>/dev/null
             sleep 0.35
@@ -715,7 +723,7 @@ apply_fixed_mode() {
     fi
 
     # Last vendor fallback, only when capability is known.
-    if [ "$deep_lock" = "1" ] && [ "$CAN_SF" = "1" ]; then
+    if [ "$deep_lock" = "1" ] && [ "$CAN_SF" = "1" ] && [ -n "$mid" ]; then
         if sf_set "$mid"; then
             : > "$SFLAG" 2>/dev/null
             sleep 0.35

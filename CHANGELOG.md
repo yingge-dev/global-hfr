@@ -1,5 +1,14 @@
 # Changelog
 
+## v2.2.6
+
+修复 Xiaomi 17 反馈的「60Hz 显示不支持」问题。
+
+- UI 档位列表同时读取 `panel.modes` 和系统上报的 `panel.rates`，60Hz 有上报就可用。
+- 固定档在没有独立 SF 模式 ID、但 rates 支持时，改走 Settings（min=peak=目标）并回读核验。
+- 20 / 24 / 30 / 40Hz 只要系统真实上报就会出现在档位里；没上报不硬写。
+- 代码审计：`node --check` / `bash -n` 通过。
+
 ## v2.2.5
 
 修复 Xiaomi 17 Pro 用户反馈的「面板显示 360Hz」问题。

@@ -77,8 +77,8 @@
   var DEMO = {
     ok: 1,
     ts: Math.floor(Date.now() / 1000),
-    version: 'v2.2.5',
-    versionCode: 20205,
+    version: 'v2.2.6',
+    versionCode: 20206,
     device: {
       brand: 'OnePlus', model: 'PJZ110', market: 'OnePlus 13',
       rom: 'ColorOS 15.0.1', android: '15', sdk: 35,
@@ -176,11 +176,19 @@
   }
 
   function rateList(data) {
-    var modes = (data.panel && data.panel.modes) || [];
+    var panel = (data && data.panel) || {};
+    var modes = panel.modes || [];
+    var rates = panel.rates || [];
     var seen = {};
     var out = [];
     modes.forEach(function (m) {
       var hz = Math.round(Number(m.hz) || 0);
+      if (hz > 0 && !seen[hz]) { seen[hz] = 1; out.push(hz); }
+    });
+    // 有些 HyperOS / LTPO 面板只有 60/90/120 这种离散模式，
+    // 但设置层实际支持 60Hz；panel.rates 由系统上报，必须一起算。
+    rates.forEach(function (r) {
+      var hz = Math.round(Number(r) || 0);
       if (hz > 0 && !seen[hz]) { seen[hz] = 1; out.push(hz); }
     });
     out.sort(function (a, b) { return a - b; });

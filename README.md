@@ -2,7 +2,7 @@
   <img src="screenshots/01_封面.png" alt="真·全局高刷" width="100%">
 </p>
 
-<h1 align="center">真·全局高刷 v2.2.5</h1>
+<h1 align="center">真·全局高刷 v2.2.6</h1>
 
 <p align="center">
   小米 / OPPO / 一加 / realme 与通用骁龙 · 天玑机型<br>
@@ -28,6 +28,15 @@
 </p>
 
 ---
+
+## v2.2.6 更新了什么
+
+修复 Xiaomi 17 反馈的「60Hz 显示不支持」问题。
+
+- UI 同时读取显示模式和系统上报的 rates，60Hz 不再误判。
+- 固定 60Hz 在没有独立 SF 模式时改走 Settings，并回读核验。
+- 20 / 24 / 30 / 40Hz 只在系统真实上报时出现。
+- 代码审计：`node --check` / `bash -n` 通过。
 
 ## v2.2.5 更新了什么
 
