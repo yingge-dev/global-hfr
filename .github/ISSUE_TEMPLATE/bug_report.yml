@@ -1,0 +1,105 @@
+name: Bug / 机型反馈
+description: 高刷锁不住、动态掉帧、触控节点、兼容性等问题的统一反馈入口
+title: "[Bug] 机型 - 问题简述"
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢反馈。请尽量把信息填完整，方便统一复现和修复。
+
+        **注意：不要填 IMEI、序列号、账号、手机号等隐私信息。**
+
+  - type: input
+    id: device
+    attributes:
+      label: 手机型号
+      description: 例如 Xiaomi 17 Pro、MIX Flip 2、OnePlus 13
+      placeholder: 品牌 + 型号
+    validations:
+      required: true
+
+  - type: input
+    id: rom
+    attributes:
+      label: 系统 / ROM 版本
+      description: 例如 HyperOS 3.0.1、ColorOS 16、Android 16
+      placeholder: 系统名称 + 版本
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: 模块版本
+      description: WebUI 设置页或模块信息里显示的版本
+      placeholder: 例如 v2.2.5
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: 问题类型
+      options:
+        - 固定档锁不住 / 切换后还是系统默认
+        - 固定档用一会掉到 60
+        - 动态刷新率不生效 / 掉帧
+        - 面板档位显示异常（例如 360Hz）
+        - 触控节点不生效
+        - 模块安装 / 开机 / 重启问题
+        - 项目主页 / WebUI 显示问题
+        - 其他
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 问题描述
+      description: 什么现象、什么时候开始、期望是什么
+      placeholder: 越具体越好
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      description: 从打开哪个页面、点了什么、过了多久开始出现
+      placeholder: |
+        1. 打开 WebUI
+        2. 选择 ...
+        3. 等待 ...
+        4. 现象 ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: selfcheck
+    attributes:
+      label: 兼容性自检结果
+      description: WebUI → 设置 → 兼容性自检，截图或粘贴文字
+      placeholder: 面板最高 / 系统原生上限 / 支持速率 / 推荐动态 / 当前实际
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 运行日志
+      description: WebUI → 设置 → 运行日志，最近 120 行即可
+      placeholder: 粘贴日志，或先提交 Issue 后再拖截图
+      render: text
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: 确认
+      options:
+        - label: 我已经搜索过现有 Issue，确认不是重复问题
+          required: true
+        - label: 我确认没有填写 IMEI、序列号、账号等隐私信息
+          required: true

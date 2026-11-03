@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 先看项目主页和更新日志
+    url: https://yingge-dev.github.io/global-hfr/
+    about: 安装说明、常见问题、版本更新
+  - name: 已有反馈 / 讨论
+    url: https://github.com/yingge-dev/global-hfr/issues
+    about: 先搜索有没有相同机型或相同现象
