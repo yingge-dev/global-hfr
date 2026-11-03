@@ -209,7 +209,7 @@
     <div class="sec-head reveal">
       <span class="eyebrow"><i></i> CHANGELOG</span>
       <h2>v2.2.4<br>掉 60 自动拉回。</h2>
-      <p>固定档底层锁回读失败时不再直接结束，继续走 DisplayManager / Settings；守护进程每 5 秒检查一次，掉 60 自动重新锁定。</p>
+      <p>固定档底层锁回读失败时不再直接结束，继续走 DisplayManager / Settings；守护进程每 2 秒检查一次，掉 60 自动重新锁定。</p>
     </div>
     <div class="lock-card card reveal" style="margin-bottom:20px">
       <div class="lock-row">
@@ -218,7 +218,7 @@
       </div>
       <div class="lock-row">
         <span class="num">02</span>
-        <div><b>掉 60 自动拉回</b><p>固定档守护从 30 秒一次改为每 5 秒检查实际刷新率；抖音、B 站等应用把帧率压到 60 时，自动重新应用固定档。</p></div>
+        <div><b>掉 60 自动拉回</b><p>固定档守护从 30 秒一次改为每 2 秒检查实际刷新率；抖音、B 站等应用把帧率压到 60 时，自动重新应用固定档。</p></div>
       </div>
       <div class="lock-row">
         <span class="num">03</span>
