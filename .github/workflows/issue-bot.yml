@@ -1,0 +1,47 @@
+name: Issue auto reception
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  reply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Reply with diagnostic checklist
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            if (!issue || !issue.user || issue.user.type === 'Bot') return;
+
+            const body = [
+              `@${issue.user.login} 已收到反馈。`,
+              '',
+              '为了能复现和统一修复，请补充下面这些信息：',
+              '',
+              '- 手机型号 / ROM 版本',
+              '- 模块版本（WebUI 设置页可见）',
+              '- WebUI → 设置 → 兼容性自检（截图或文字）',
+              '- WebUI → 设置 → 运行日志（最近 120 行）',
+              '- 当前实际刷新率、目标刷新率',
+              '- 固定档还是动态，是否重启过',
+              '',
+              '如果是锁不住 / 掉 60，请说明具体应用、复现步骤和出现时间；如果面板档位异常，请附兼容性自检截图。',
+              '',
+              '项目主页：https://yingge-dev.github.io/global-hfr/',
+              '安装说明：https://yingge-dev.github.io/global-hfr/#install',
+              '',
+              '> 这是机器人自动回复，不会自动改代码或发版；修复会在 Issue 里跟进。'
+            ].join('\n');
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              body
+            });
