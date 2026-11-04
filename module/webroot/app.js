@@ -61,10 +61,24 @@
 
   function parseJson(text) {
     if (!text) return null;
-    var i = text.indexOf('{');
-    var j = text.lastIndexOf('}');
+    var src = String(text).replace(/\r/g, '');
+    // 先按行找完整 JSON，避免 stderr / 日志混进 stdout 后把首尾大括号夹错。
+    var lines = src.split('\n');
+    for (var k = 0; k < lines.length; k++) {
+      var line = lines[k].trim();
+      if (!line) continue;
+      var a = line.indexOf('{');
+      var b = line.lastIndexOf('}');
+      if (a < 0 || b <= a) continue;
+      try {
+        var o = JSON.parse(line.slice(a, b + 1));
+        if (o && typeof o === 'object') return o;
+      } catch (e) {}
+    }
+    var i = src.indexOf('{');
+    var j = src.lastIndexOf('}');
     if (i < 0 || j <= i) return null;
-    try { return JSON.parse(text.slice(i, j + 1)); } catch (e) { return null; }
+    try { return JSON.parse(src.slice(i, j + 1)); } catch (e) { return null; }
   }
 
   function run(args) {
@@ -73,12 +87,18 @@
     });
   }
 
+  function runStatus() {
+    return exec('sh ' + ENGINE + ' status 2>/dev/null').then(function (r) {
+      return { raw: r, json: parseJson(r.stdout) };
+    });
+  }
+
   /* ---------------- 演示数据（浏览器预览） ---------------- */
   var DEMO = {
     ok: 1,
     ts: Math.floor(Date.now() / 1000),
-    version: 'v2.2.6',
-    versionCode: 20206,
+    version: 'v2.2.7',
+    versionCode: 20207,
     device: {
       brand: 'OnePlus', model: 'PJZ110', market: 'OnePlus 13',
       rom: 'ColorOS 15.0.1', android: '15', sdk: 35,
@@ -455,15 +475,8 @@
 
   function inferVerified() {
     if (!state || !state.live) return;
-    var l = state.live;
-    var cfg = state.config || {};
-    if (cfg.profile === 'dynamic') {
-      l.verified = (l.engine === 'native' || l.engine === 'adaptive') ? 1 : 0;
-      return;
-    }
-    var t = Number(l.target) || 0;
-    var c = Number(l.current) || 0;
-    if (t > 0 && Math.abs(c - t) <= 2 && Number(l.verified) !== 1) l.verified = 1;
+    // 只认引擎回读结果；不能再因为“当前值等于目标值”把兼容模式升级成已核验。
+    state.live.verified = Number(state.live.verified) === 1 ? 1 : 0;
   }
 
   function renderTouch(t, c) {
@@ -547,7 +560,6 @@
   }
 
   function renderError(raw) {
-    var msg = (raw && (raw.stderr || raw.stdout)) || '';
     $('#curHz').textContent = '--';
     $('#curTag').textContent = '未连接';
     $('#curTag').className = 'hz-tag warn';
@@ -555,7 +567,7 @@
     $('#liveDot').className = 'pulse bad';
     $('#devName').textContent = '未连接';
     $('#devDot').className = 'dot err';
-    $('#methodLine').textContent = msg ? msg.slice(0, 90) : ('找不到 ' + ENGINE);
+    $('#methodLine').textContent = '引擎返回数据异常，请点右上角刷新重试；仍失败请查看运行日志。';
     $('#statMax').textContent = '--';
     $('#statTarget').textContent = '--';
     $('#statVerify').textContent = '--';
@@ -694,7 +706,11 @@
     }
     if (!opts.silent) $('#btnRefresh').classList.add('spin');
     try {
-      var r = await run('status');
+      var r = await runStatus();
+      if (!r.json && !opts.retried) {
+        await new Promise(function (res) { setTimeout(res, 250); });
+        r = await runStatus();
+      }
       if (r.json && r.json.ok) {
         demo = false;
         state = r.json;

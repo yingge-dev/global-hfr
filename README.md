@@ -2,7 +2,7 @@
   <img src="screenshots/01_封面.png" alt="真·全局高刷" width="100%">
 </p>
 
-<h1 align="center">真·全局高刷 v2.2.6</h1>
+<h1 align="center">真·全局高刷 v2.2.7</h1>
 
 <p align="center">
   小米 / OPPO / 一加 / realme 与通用骁龙 · 天玑机型<br>
@@ -28,6 +28,15 @@
 </p>
 
 ---
+
+## v2.2.7 更新了什么
+
+修复 WebUI 状态显示：
+
+- 兼容模式不再误显示「已核验」，只认引擎回读的 verified。
+- 状态异常时不再把原始 JSON 铺在页面上，自动重试一次并显示友好提示。
+- status 屏蔽 stderr，并支持逐行提取 JSON。
+- 代码审计：`node --check` / `bash -n` 通过。
 
 ## v2.2.6 更新了什么
 
