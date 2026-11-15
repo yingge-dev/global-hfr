@@ -50,8 +50,8 @@ if [ -f "$MODDIR/module.prop" ]; then
         esac
     done < "$MODDIR/module.prop"
 fi
-[ -n "$VER" ] || VER=v2.2.8
-is_num "$VC" || VC=20208
+[ -n "$VER" ] || VER=v2.2.9
+is_num "$VC" || VC=20209
 
 [ -d "$DATA" ] || mkdir -p "$DATA" 2>/dev/null
 
@@ -321,6 +321,14 @@ caps_load() {
     [ -n "$HFR_FORCE_NO_SF" ] && CAN_SF=0
     case "$CAN_SF" in 0|1) ;; *) CAN_SF=0 ;; esac
     case "$CAN_CMD" in 0|1) ;; *) CAN_CMD=0 ;; esac
+}
+
+clear_vendor_keys() {
+    for spec in $VENDOR_KEYS; do
+        ns=${spec%%:*}; key=${spec#*:}
+        settings delete "$ns" "$key" >/dev/null 2>&1 &
+    done
+    wait
 }
 
 set_vendor_keys() {
@@ -650,8 +658,8 @@ apply_native_range() {
     settings put system min_refresh_rate "$lo" >/dev/null 2>&1 &
     settings put system peak_refresh_rate "$hi" >/dev/null 2>&1 &
     settings delete system user_refresh_rate >/dev/null 2>&1 &
-    set_vendor_keys "$hi"
-    wait
+    # LTPO 原生区间必须让系统自己调度；把厂商固定刷新率键写成 hi 会变成硬锁。
+    clear_vendor_keys
     log "native range $lo-$hi"
 }
 

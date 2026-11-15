@@ -1,5 +1,15 @@
 # Changelog
 
+## v2.2.9
+
+修复原生动态被厂商固定键硬锁的问题。
+
+- 原生动态不再把 `miui_refresh_rate` / `oplus_screen_refresh_rate` 写成高刷。
+- 原生动态只设置 `min_refresh_rate` / `peak_refresh_rate`，让系统按 LTPO 区间调度。
+- 固定档仍然保留厂商固定键；动态与固定分开处理。
+- 保留 v2.2.8 的精简 status、按需触摸节点、rates 面板最高判断和「面板最高 · 自动」。
+- 代码审计：`bash -n` / `node --check` 通过。
+
 ## v2.2.8
 
 面向“更多机型能用”做的可靠性优化。

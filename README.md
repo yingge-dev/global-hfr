@@ -2,7 +2,7 @@
   <img src="screenshots/01_封面.png" alt="真·全局高刷" width="100%">
 </p>
 
-<h1 align="center">真·全局高刷 v2.2.8</h1>
+<h1 align="center">真·全局高刷 v2.2.9</h1>
 
 <p align="center">
   小米 / OPPO / 一加 / realme 与通用骁龙 · 天玑机型<br>
@@ -28,6 +28,15 @@
 </p>
 
 ---
+
+## v2.2.9 更新了什么
+
+修复原生动态被厂商固定键硬锁。
+
+- 原生动态不再写 `miui_refresh_rate` / `oplus_screen_refresh_rate`，只设 min/peak，让 LTPO 区间真正生效。
+- 固定档仍保留厂商固定键，动态与固定分开。
+- 保留 v2.2.8 的状态瘦身、按需触控节点、rates 面板最高和自动上限。
+- 代码审计：`bash -n` / `node --check` 通过。
 
 ## v2.2.8 更新了什么
 
