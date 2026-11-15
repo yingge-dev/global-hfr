@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#eef3fa" id="themeColor">
-<meta name="description" content="真·全局高刷 v2.2.7：小米 / OPPO / 一加 / realme 与通用机型，能力自检 + 多级回退，60–185Hz 固定档位，原生 / 自适应动态刷新率，触控加速与玻璃拟态 WebUI。">
+<meta name="description" content="真·全局高刷 v2.2.8：小米 / OPPO / 一加 / realme 与通用机型，能力自检 + 多级回退，60–185Hz 固定档位，原生 / 自适应动态刷新率，触控加速与玻璃拟态 WebUI。">
 <title>真·全局高刷 · 小米 / OPPO / 一加全平台</title>
 <link rel="stylesheet" href="style.css?v=20261103a">
 
@@ -75,16 +75,16 @@
 <main id="top">
   <div class="release-bar" id="releaseBar">
     <span class="rb-dot"></span>
-    <div><b id="releaseTitle">v2.2.7 已发布</b><em id="releaseDesc">修复 WebUI 状态误判与错误页原始 JSON</em></div>
+    <div><b id="releaseTitle">v2.2.8 已发布</b><em id="releaseDesc">精简状态接口，动态上限自动跟随面板</em></div>
     <a href="#changelog">更新内容 →</a>
   </div>
   <section class="hero">
     <div class="hero-copy">
-      <span class="eyebrow"><i></i> v2.2.7 · Android 11+ · Magisk / KernelSU / APatch</span>
+      <span class="eyebrow"><i></i> v2.2.8 · Android 11+ · Magisk / KernelSU / APatch</span>
       <h1>把高刷，<br><span>锁进系统底层。</span></h1>
-      <p class="lead">真·全局高刷 v2.2.7。动态下限支持 30 / 60 / 90Hz，按面板上报自动识别；能力自检 + 多级回退，按机型选择可用的锁帧 / 动态接口；60–185Hz 固定档位，原生 / 自适应双动态引擎，静止降下限、触控回峰值。不是只写一个 <code>settings</code> 就自称全局。</p>
+      <p class="lead">真·全局高刷 v2.2.8。动态下限支持 30 / 60 / 90Hz，按面板上报自动识别；能力自检 + 多级回退，按机型选择可用的锁帧 / 动态接口；60–185Hz 固定档位，原生 / 自适应双动态引擎，静止降下限、触控回峰值。不是只写一个 <code>settings</code> 就自称全局。</p>
       <div class="cta">
-        <a class="btn blue" href="assets/真·全局高刷.zip?v=2.2.7&amp;src=page" download="真·全局高刷.zip" data-dl="hfr">
+        <a class="btn blue" href="assets/真·全局高刷.zip?v=2.2.8&amp;src=page" download="真·全局高刷.zip" data-dl="hfr">
           <svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></svg>
           下载模块
         </a>
@@ -201,16 +201,39 @@
       <div class="step card reveal"><b>03</b><h3>打开 WebUI</h3><p>KernelSU / APatch 模块页直接开；Magisk 安装 KsuWebUI 并授予 Root。</p></div>
     </div>
     <div class="install-cta reveal">
-      <a class="btn blue big" href="assets/真·全局高刷.zip?v=2.2.7&amp;src=page" download="真·全局高刷.zip" data-dl="hfr">下载 真·全局高刷.zip</a>
-      <span>Android 11+ · 约 42 KB · v2.2.7</span>
+      <a class="btn blue big" href="assets/真·全局高刷.zip?v=2.2.8&amp;src=page" download="真·全局高刷.zip" data-dl="hfr">下载 真·全局高刷.zip</a>
+      <span>Android 11+ · 约 42 KB · v2.2.8</span>
     </div>
   </section>
 
   <section class="section" id="changelog">
     <div class="sec-head reveal">
       <span class="eyebrow"><i></i> CHANGELOG</span>
-      <h2>v2.2.7<br>状态显示修复。</h2>
-      <p>修复 WebUI 把“兼容模式”误显示为“已核验”；状态数据异常时不再把原始 JSON 直接铺在页面上。</p>
+      <h2>v2.2.8<br>状态更小，上限自动。</h2>
+      <p>状态 JSON 从 1.6KB 压到约 0.8KB，减少 WebUI 输出截断导致的“未连接”；动态上限新增“面板最高 · 自动”。</p>
+    </div>
+    <div class="lock-card card reveal" style="margin-bottom:20px">
+      <div class="lock-row">
+        <span class="num">01</span>
+        <div><b>状态接口瘦身</b><p>status 不再携带触摸节点和完整模式表，从约 1.6KB 降到约 0.8KB；触摸节点改为按需读取，降低 WebUI 输出被截断导致「未连接」的概率。</p></div>
+      </div>
+      <div class="lock-row">
+        <span class="num">02</span>
+        <div><b>面板最高从 rates 一起算</b><p>显示模式没有列出的速率，只要系统 rates 上报了，也会计入面板最高；避免 165Hz 面板被误判成 120Hz。</p></div>
+      </div>
+      <div class="lock-row">
+        <span class="num">03</span>
+        <div><b>动态上限「自动」</b><p>动态刷新上限新增「面板最高 · 自动」，按当前手机真实最高档位生效，不再固定写死 120 / 165。</p></div>
+      </div>
+      <div class="lock-row">
+        <span class="num">04</span>
+        <div><b>安装权限回退更兼容</b><p>安装脚本的权限回退改用逐文件 chmod，兼容部分 APatch / 旧 toybox 环境。</p></div>
+      </div>
+      <p class="lock-note">v2.2.8 不改底层锁帧策略；一加 / OPPO 的 165 白名单仍由厂商系统决定。</p>
+    </div>
+    <div class="sec-head reveal" style="padding-top:6px">
+      <span class="eyebrow">v2.2.7</span>
+      <h2 style="font-size:24px">状态显示修复</h2>
     </div>
     <div class="lock-card card reveal" style="margin-bottom:20px">
       <div class="lock-row">
@@ -476,7 +499,7 @@
       <h2>真·全局高刷</h2>
       <p>小米 / OPPO / 一加全平台 · 60–185Hz · 动态刷新 · 触控增强</p>
       <div class="cta center">
-        <a class="btn blue" href="assets/真·全局高刷.zip?v=2.2.7&amp;src=page" download="真·全局高刷.zip" data-dl="hfr">下载模块</a>
+        <a class="btn blue" href="assets/真·全局高刷.zip?v=2.2.8&amp;src=page" download="真·全局高刷.zip" data-dl="hfr">下载模块</a>
         <a class="btn glass" data-repo href="https://github.com/yingge-dev/global-hfr" target="_blank" rel="noopener">GitHub</a>
       </div>
       <p class="tiny">作者：颖哥 · MIT License · 刷机有风险，请先备份</p>

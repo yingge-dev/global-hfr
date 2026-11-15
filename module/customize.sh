@@ -18,8 +18,8 @@ fi
 if ! command -v set_perm_recursive >/dev/null 2>&1; then
     set_perm_recursive() {
         chown -R "$2:$3" "$1" 2>/dev/null
-        find "$1" -type d -exec chmod "$4" {} + 2>/dev/null
-        find "$1" -type f -exec chmod "$5" {} + 2>/dev/null
+        find "$1" -type d -exec chmod "$4" {} \; 2>/dev/null
+        find "$1" -type f -exec chmod "$5" {} \; 2>/dev/null
     }
 fi
 

@@ -2,7 +2,7 @@
   <img src="screenshots/01_封面.png" alt="真·全局高刷" width="100%">
 </p>
 
-<h1 align="center">真·全局高刷 v2.2.7</h1>
+<h1 align="center">真·全局高刷 v2.2.8</h1>
 
 <p align="center">
   小米 / OPPO / 一加 / realme 与通用骁龙 · 天玑机型<br>
@@ -28,6 +28,16 @@
 </p>
 
 ---
+
+## v2.2.8 更新了什么
+
+可靠性优化，目标是让更多机型能正常打开 WebUI。
+
+- status 精简到约 0.8KB，触摸节点按需读取，降低输出截断导致的「未连接」。
+- 面板最高同时参考 modes 和 rates，避免 165Hz 面板被误判成 120Hz。
+- 动态上限新增「面板最高 · 自动」，按设备真实最高档位生效。
+- 安装脚本权限回退改用逐文件 chmod，兼容部分 APatch / 旧 toybox。
+- 代码审计：`node --check` / `bash -n` 通过。
 
 ## v2.2.7 更新了什么
 

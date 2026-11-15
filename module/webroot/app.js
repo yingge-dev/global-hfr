@@ -16,6 +16,7 @@
   var pollTimer = null;
   var shownHz = 0;
   var firstPaint = true;
+  var touchNodesLoaded = false;
   var lastInteract = 0;
   var THEME_KEY = 'hfr_theme_v1';
   var themeMode = 'auto';
@@ -97,8 +98,8 @@
   var DEMO = {
     ok: 1,
     ts: Math.floor(Date.now() / 1000),
-    version: 'v2.2.7',
-    versionCode: 20207,
+    version: 'v2.2.8',
+    versionCode: 20208,
     device: {
       brand: 'OnePlus', model: 'PJZ110', market: 'OnePlus 13',
       rom: 'ColorOS 15.0.1', android: '15', sdk: 35,
@@ -315,6 +316,7 @@
     renderRates(c, max, rateList(state));
     renderDynamic(c, max, rateList(state));
     renderTouch(t, c);
+    loadTouchNodes();
     renderSettings(d, c);
   }
 
@@ -384,17 +386,18 @@
     minEl.innerHTML = mins.map(function (v) {
       return '<option value="' + v + '">' + v + ' Hz' + (v <= 30 ? ' · LTPO' : '') + '</option>';
     }).join('');
-    maxEl.innerHTML = maxs.map(function (v) {
+    maxEl.innerHTML = '<option value="0">面板最高 · 自动 ' + panelMax + ' Hz</option>' + maxs.map(function (v) {
       return '<option value="' + v + '">' + v + ' Hz</option>';
     }).join('');
 
     var wantMin = Number(c.dyn_min) || 60;
-    var wantMax = Number(c.dyn_max) || panelMax;
+    var wantMax = Number(c.dyn_max) || 0;
     minEl.value = String(nearest(mins, wantMin));
-    maxEl.value = String(nearest(maxs, wantMax));
+    if (wantMax === 0) maxEl.value = '0';
+    else maxEl.value = String(nearest(maxs, wantMax));
 
     var lo = Number(minEl.value);
-    var hi = Number(maxEl.value);
+    var hi = Number(maxEl.value) || panelMax;
     if (hi <= lo) { hi = maxs[maxs.length - 1]; maxEl.value = String(hi); }
 
     var floor = mins[0];
@@ -473,6 +476,19 @@
     return map[name] || name;
   }
 
+  function loadTouchNodes() {
+    if (touchNodesLoaded || !state || demo || !hasApi()) return;
+    touchNodesLoaded = true;
+    run('touchjson').then(function (r) {
+      if (!r.json || !r.json.touch || !state || !state.touch) return;
+      state.touch.nodes = r.json.touch.nodes || [];
+      state.touch.applied = r.json.touch.applied;
+      state.touch.enabled = r.json.touch.enabled;
+      state.touch.level = r.json.touch.level;
+      renderTouch(state.touch, state.config || {});
+    }).catch(function () {});
+  }
+
   function inferVerified() {
     if (!state || !state.live) return;
     // 只认引擎回读结果；不能再因为“当前值等于目标值”把兼容模式升级成已核验。
@@ -531,12 +547,14 @@
     $('#rowOplus').hidden = !isOplus;
 
     var modes = rateList(state);
-    var res = '';
-    var bestPx = 0;
-    (state.panel && state.panel.modes || []).forEach(function (m) {
-      var px = (Number(m.w) || 0) * (Number(m.h) || 0);
-      if (px > bestPx) { bestPx = px; res = m.w + ' × ' + m.h; }
-    });
+    var res = (state.panel && state.panel.res) ? String(state.panel.res).replace('x', ' × ') : '';
+    if (!res) {
+      var bestPx = 0;
+      (state.panel && state.panel.modes || []).forEach(function (m) {
+        var px = (Number(m.w) || 0) * (Number(m.h) || 0);
+        if (px > bestPx) { bestPx = px; res = m.w + ' × ' + m.h; }
+      });
+    }
     var platform = platformText(d.platform);
     var capText = [];
     if (Number(caps.can_sf) === 1) capText.push('底层锁');
@@ -714,6 +732,7 @@
       if (r.json && r.json.ok) {
         demo = false;
         state = r.json;
+        touchNodesLoaded = false;
         inferVerified();
         render();
         if (!updateChecked && !demo) setTimeout(function () { checkUpdate(false); }, 800);
@@ -897,7 +916,7 @@
         applySwitch('off', '已交还系统调度', 'off');
       } else {
         var lo = $('#dynMin').value;
-        var hi = $('#dynMax').value;
+        var hi = dynMaxValue();
         if (Number(hi) <= Number(lo)) { toast('上限需大于下限', 'err'); return; }
         applySwitch('dynamic ' + lo + ' ' + hi + ' ' + currentEngine(), '动态区间已应用', 'dynamic', { lo: lo, hi: hi });
       }
@@ -931,7 +950,7 @@
 
     $('#btnApplyDyn').addEventListener('click', function () {
       var lo = $('#dynMin').value;
-      var hi = $('#dynMax').value;
+      var hi = dynMaxValue();
       if (Number(hi) <= Number(lo)) { toast('上限需大于下限', 'err'); return; }
       applySwitch('dynamic ' + lo + ' ' + hi + ' ' + currentEngine(), '动态区间已应用', 'dynamic', { lo: lo, hi: hi });
     });
@@ -942,7 +961,7 @@
       var eng = btn.getAttribute('data-engine');
       $$('#dynEngineSeg button').forEach(function (b) { b.classList.toggle('on', b === btn); });
       var lo = $('#dynMin').value;
-      var hi = $('#dynMax').value;
+      var hi = dynMaxValue();
       if (Number(hi) <= Number(lo)) { toast('上限需大于下限', 'err'); return; }
       applySwitch('dynamic ' + lo + ' ' + hi + ' ' + eng, '动态实现已切换', 'dynamic', { lo: lo, hi: hi });
     });
@@ -1106,6 +1125,12 @@
     document.addEventListener('visibilitychange', function () {
       if (document.visibilityState === 'visible' && hasApi()) refresh({ silent: true });
     });
+  }
+
+  function dynMaxValue() {
+    var v = Number($('#dynMax').value) || 0;
+    if (v > 0) return v;
+    return Number((state && state.panel && state.panel.max) || 0) || 120;
   }
 
   function syncDynBar() {

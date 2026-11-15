@@ -50,8 +50,8 @@ if [ -f "$MODDIR/module.prop" ]; then
         esac
     done < "$MODDIR/module.prop"
 fi
-[ -n "$VER" ] || VER=v2.2.7
-is_num "$VC" || VC=20207
+[ -n "$VER" ] || VER=v2.2.8
+is_num "$VC" || VC=20208
 
 [ -d "$DATA" ] || mkdir -p "$DATA" 2>/dev/null
 
@@ -430,12 +430,14 @@ scan_modes() {
     if [ -s "$MODES.tmp" ]; then
         mv -f "$MODES.tmp" "$MODES"
         mx=$(awk -F'\t' 'BEGIN{m=0} {if ($4+0 > m) m=$4+0} END{if (m>0) printf "%.0f", m}' "$MODES" 2>/dev/null)
+        rts=$(detect_rates)
+        rmax=$(printf '%s' "$rts" | tr ',' '\n' | awk '$1+0>m{m=$1+0} END{if(m>0)printf "%.0f",m}')
+        if is_num "$rmax" && [ "$rmax" -gt "$mx" ] 2>/dev/null; then mx=$rmax; fi
         nm=$(dumpsys display 2>/dev/null | sed -n 's/.*mLockedMaxRefreshRate: \([0-9.]*\).*/\1/p' | head -n 1)
         nm=${nm%%.*}
         is_num "$nm" || nm=0
         [ "$nm" -le 60 ] 2>/dev/null && nm=$mx
         [ "$nm" -gt "$mx" ] 2>/dev/null && nm=$mx
-        rts=$(detect_rates)
         printf 'max=%s\nnative=%s\nrates=%s\n' "${mx:-0}" "${nm:-$mx}" "${rts}" > "$PANEL" 2>/dev/null
         log "scan modes: $(wc -l < "$MODES") native=${nm:-$mx} rates=$rts"
         return 0
@@ -550,6 +552,9 @@ refresh_native_cap() {
         scan_modes
         mx=$(max_hz); [ -n "$mx" ] || return 1
     fi
+    rts=$(detect_rates)
+    rmax=$(printf '%s' "$rts" | tr ',' '\n' | awk '$1+0>m{m=$1+0} END{if(m>0)printf "%.0f",m}')
+    if is_num "$rmax" && [ "$rmax" -gt "$mx" ] 2>/dev/null; then mx=$rmax; fi
     nm=$(dumpsys display 2>/dev/null | sed -n 's/.*mLockedMaxRefreshRate: \([0-9.]*\).*/\1/p' | head -n 1)
     nm=${nm%%.*}
     is_num "$nm" || nm=0
@@ -1113,7 +1118,12 @@ json_status() {
 
     nmax=$(native_max); [ -n "$nmax" ] || nmax=$mx
     rates=$(panel_rates)
-    printf '"panel":{"max":%s,"nativeMax":%s,"rates":[' "$mx" "$nmax"
+    res=""
+    if [ -s "$MODES" ]; then
+        set -- $(head -n 1 "$MODES" 2>/dev/null)
+        [ -n "$2" ] && [ -n "$3" ] && res="${2}x${3}"
+    fi
+    printf '"panel":{"max":%s,"nativeMax":%s,"res":"%s","rates":[' "$mx" "$nmax" "$res"
     first=1
     if [ -n "$rates" ]; then
         old_ifs=$IFS; IFS=','
@@ -1125,17 +1135,6 @@ json_status() {
             first=0
             printf '%s' "$r"
         done
-    fi
-    printf '],"modes":['
-    first=1
-    if [ -s "$MODES" ]; then
-        while read -r line; do
-            set -- $line
-            [ -n "$1" ] || continue
-            [ "$first" = "1" ] || printf ','
-            first=0
-            printf '{"id":%s,"w":%s,"h":%s,"hz":%s}' "$1" "${2:-0}" "${3:-0}" "${4:-0}"
-        done < "$MODES"
     fi
     printf ']},'
 
@@ -1149,7 +1148,13 @@ json_status() {
     printf '"live":{"current":%s,"target":%s,"verified":%s,"method":"%s","engine":"%s","updated":%s,"restart_required":%s},' \
         "$cur" "$st_target" "$st_ver" "$st_method" "$st_engine" "$st_ts" "$st_restart"
 
-    printf '"touch":{"enabled":%s,"level":"%s","applied":%s,"nodes":[' "$touch" "$touch_level" "$st_touch"
+    printf '"touch":{"enabled":%s,"level":"%s","applied":%s}}\n' "$touch" "$touch_level" "$st_touch"
+}
+
+json_touch() {
+    load_conf
+    read_state
+    printf '{"ok":1,"touch":{"enabled":%s,"level":"%s","applied":%s,"nodes":[' "$touch" "$touch_level" "$st_touch"
     cat "$TOUCHJSON" 2>/dev/null
     printf ']}}\n'
 }
@@ -1485,6 +1490,9 @@ case "$cmd" in
         load_conf
         apply_all
         apply_json
+        ;;
+    touchjson)
+        json_touch
         ;;
     touch)
         case "$2" in
