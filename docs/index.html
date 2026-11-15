@@ -3,26 +3,30 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0e0b08" id="themeColor">
-<meta name="description" content="真·全局高刷 v2.2.10：小米 / OPPO / 一加 / realme 与通用机型，能力自检 + 多级回退，60–185Hz 固定档位，原生 / 自适应动态刷新率，触控加速与 WebUI。">
-<title>真·全局高刷 · 把高刷锁进系统底层</title>
-<link rel="stylesheet" href="style.css?v=20261116a">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%23ff5a1f'/%3E%3Ctext x='32' y='45' font-size='34' text-anchor='middle' fill='white' font-family='sans-serif'%3E颖%3C/text%3E%3C/svg%3E">
+<meta name="theme-color" content="#eef3fa" id="themeColor">
+<meta name="description" content="真·全局高刷 v2.2.10：小米 / OPPO / 一加 / realme 与通用机型，能力自检 + 多级回退，60–185Hz 固定档位，原生 / 自适应动态刷新率，触控加速与玻璃拟态 WebUI。">
+<title>真·全局高刷 · 小米 / OPPO / 一加全平台</title>
+<link rel="stylesheet" href="style.css?v=20261103a">
+
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop stop-color='%230a84ff'/%3E%3Cstop offset='1' stop-color='%23af52de'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='18' fill='url(%23g)'/%3E%3Ctext x='32' y='44' font-size='34' text-anchor='middle' fill='white' font-family='sans-serif'%3E颖%3C/text%3E%3C/svg%3E">
 <script>try{var t=localStorage.getItem('ghfr-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
 </head>
 <body>
+<div class="bg" aria-hidden="true"><i class="orb a"></i><i class="orb b"></i><i class="orb c"></i><i class="grain"></i></div>
+
 <header class="nav">
   <a class="brand" href="#top">
     <span class="mark">颖</span>
     <span class="brand-t">真·全局高刷<em>GLOBAL REFRESH</em></span>
   </a>
-  <nav class="links" aria-label="主导航">
+  <nav class="links">
     <a href="#features">功能</a>
     <a href="#lock">原理</a>
-    <a href="#shots">界面</a>
+    <a href="#shots">截图</a>
     <a href="#install">安装</a>
     <a href="#changelog">更新</a>
     <a href="#feedback">反馈</a>
+    <a href="#faq">FAQ</a>
   </nav>
   <div class="nav-act">
     <button class="icon music-btn" id="musicBtn" type="button" aria-label="背景音乐" title="背景音乐">
@@ -43,15 +47,28 @@
 <div class="music-panel" id="musicPanel" hidden>
   <div class="music-head">
     <span class="music-art">♪</span>
-    <div class="music-info"><b id="musicTitle">唐人恋曲 (DJ版)</b><em id="musicState">DJ大圣</em></div>
+    <div class="music-info">
+      <b id="musicTitle">唐人恋曲 (DJ版)</b>
+      <em id="musicState">DJ大圣</em>
+    </div>
     <button type="button" class="music-close" id="musicClose" aria-label="收起">×</button>
   </div>
   <div class="music-controls">
-    <button type="button" id="musicPrev" aria-label="上一首"><svg viewBox="0 0 24 24"><path d="M6 6v12M18 6l-9 6 9 6z"/></svg></button>
-    <button type="button" class="music-play" id="musicToggle" aria-label="播放 / 暂停"><svg class="play" viewBox="0 0 24 24"><path d="M8 5l12 7-12 7z"/></svg><svg class="pause" viewBox="0 0 24 24"><path d="M7 5h4v14H7zM14 5h4v14h-4z"/></svg></button>
-    <button type="button" id="musicNext" aria-label="下一首"><svg viewBox="0 0 24 24"><path d="M18 6v12M6 6l9 6-9 6z"/></svg></button>
+    <button type="button" id="musicPrev" aria-label="上一首">
+      <svg viewBox="0 0 24 24"><path d="M6 6v12M18 6l-9 6 9 6z"/></svg>
+    </button>
+    <button type="button" class="music-play" id="musicToggle" aria-label="播放 / 暂停">
+      <svg class="play" viewBox="0 0 24 24"><path d="M8 5l12 7-12 7z"/></svg>
+      <svg class="pause" viewBox="0 0 24 24"><path d="M7 5h4v14H7zM14 5h4v14h-4z"/></svg>
+    </button>
+    <button type="button" id="musicNext" aria-label="下一首">
+      <svg viewBox="0 0 24 24"><path d="M18 6v12M6 6l9 6-9 6z"/></svg>
+    </button>
   </div>
-  <div class="music-meta"><span>随机播放 · 版权归原作者</span><span id="musicIdx">1 / 4</span></div>
+  <div class="music-meta">
+    <span>随机播放 · 版权归原作者</span>
+    <span id="musicIdx">1 / 4</span>
+  </div>
 </div>
 <audio id="musicAudio" preload="auto" playsinline></audio>
 
@@ -61,157 +78,467 @@
     <div><b id="releaseTitle">v2.2.10 已发布</b><em id="releaseDesc">原生动态不再每 15 秒重写区间</em></div>
     <a href="#changelog">更新内容 →</a>
   </div>
-
   <section class="hero">
-    <div class="hero-inner">
+    <div class="hero-copy">
       <span class="eyebrow"><i></i> v2.2.10 · Android 11+ · Magisk / KernelSU / APatch</span>
       <h1>把高刷，<br><span>锁进系统底层。</span></h1>
-      <p class="lead">不是只写一个 settings 就自称全局。能力自检、底层锁、回读核验、动态 LTPO、触控加速，按每一台手机真实支持的能力工作。</p>
+      <p class="lead">真·全局高刷 v2.2.10。动态下限支持 30 / 60 / 90Hz，按面板上报自动识别；能力自检 + 多级回退，按机型选择可用的锁帧 / 动态接口；60–185Hz 固定档位，原生 / 自适应双动态引擎，静止降下限、触控回峰值。不是只写一个 <code>settings</code> 就自称全局。</p>
       <div class="cta">
-        <a class="btn primary" href="assets/真·全局高刷.zip?v=2.2.10&amp;src=page" download="真·全局高刷.zip" data-dl="hfr">
+        <a class="btn blue" href="assets/真·全局高刷.zip?v=2.2.10&amp;src=page" download="真·全局高刷.zip" data-dl="hfr">
           <svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></svg>
           下载模块
         </a>
-        <a class="btn ghost" data-repo href="https://github.com/yingge-dev/global-hfr" target="_blank" rel="noopener">
+        <a class="btn glass" data-repo href="https://github.com/yingge-dev/global-hfr" target="_blank" rel="noopener">
           <svg viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.6 2 12.2c0 4.5 2.9 8.3 6.8 9.7.5.1.7-.2.7-.5v-1.8c-2.8.6-3.4-1.2-3.4-1.2-.5-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.6 2.4 1.1 3 .9.1-.7.4-1.1.6-1.4-2.2-.3-4.6-1.1-4.6-5 0-1.1.4-2 1-2.7-.1-.3-.4-1.3.1-2.7 0 0 .8-.3 2.7 1a9.4 9.4 0 0 1 5 0c1.9-1.3 2.7-1 2.7-1 .5 1.4.2 2.4.1 2.7.6.7 1 1.6 1 2.7 0 3.9-2.4 4.7-4.6 5 .4.3.7.9.7 1.9v2.8c0 .3.2.6.7.5a10.2 10.2 0 0 0 6.8-9.7C22 6.6 17.5 2 12 2z"/></svg>
           查看源码
         </a>
       </div>
-      <p class="tiny">免费 · 无广告 · 不收集数据 · 总下载 <b id="dlTotal">28</b> 次</p>
+      <p class="tiny">免费 · 无广告 · 不收集数据 · <span title="总下载 = GitHub Release 下载 + 网页下载实时计数；同一人重复下载会重复计数，不等于独立用户数">总下载 <b id="dlTotal">28</b> 次</span></p>
     </div>
-    <div class="hero-stage">
-      <div class="hero-glow"></div>
-      <div class="hero-phone"><img src="assets/hero-module.png" alt="真·全局高刷模块 WebUI"></div>
-      <div class="float f1"><b>165Hz</b><span>已锁定 · LTPO</span></div>
+
+    <div class="hero-visual" aria-hidden="true">
+      <div class="phone p1"><img src="assets/home-light.png" alt=""></div>
+      <div class="phone p2"><img src="assets/home-dark.png" alt=""></div>
+      <div class="float f1"><b>165Hz</b><span>已锁定 · 已核验</span></div>
       <div class="float f2"><b>60–165</b><span>动态区间</span></div>
-      <div class="float f3"><b>3 层</b><span>回读核验</span></div>
-    </div>
-    <div class="hero-ticker">
-      <span>60–185 Hz 固定档</span><span>原生 / 自适应双动态</span><span>能力自检 + 多级回退</span><span>无虚假档位</span>
     </div>
   </section>
 
-  <section class="section light" id="features">
-    <div class="wrap">
-      <div class="sec-head reveal">
-        <span class="eyebrow dark"><i></i> FEATURES</span>
-        <h2>该有的都有，<br>不该吹的不吹。</h2>
-        <p>围绕“真的生效”做完整闭环，而不是堆一排看起来很强的开关。</p>
-      </div>
-      <div class="grid features">
-        <article class="card reveal"><span class="no">01</span><h3>固定档位</h3><p>扫描 SurfaceFlinger 模式，只显示设备真实拥有的 60–185Hz；没有的档位置灰，不写无效值。</p></article>
-        <article class="card reveal"><span class="no">02</span><h3>动态 LTPO</h3><p>原生模式只设置 min/peak，让系统按画面内容调度；自适应模式在触控时升到上限，静止回落。</p></article>
-        <article class="card reveal"><span class="no">03</span><h3>底层锁帧</h3><p>Xiaomi 走 SurfaceFlinger 1035，其他系统走 DisplayManager / Settings；每一层都回读核验。</p></article>
-        <article class="card reveal"><span class="no">04</span><h3>真实触控</h3><p>只写存在且写入成功的节点；没有的节点不补假项。触控 HAL 优先级、input boost 按机型生效。</p></article>
-        <article class="card reveal"><span class="no">05</span><h3>守护与恢复</h3><p>开机自启、息屏亮屏重锁、设置漂移检测；所有改动写前备份，卸载逐项还原。</p></article>
-        <article class="card reveal"><span class="no">06</span><h3>WebUI</h3><p>状态、档位、动态区间、触控、自检、日志都在一个页面；支持 KernelSU / APatch，Magisk 用 KsuWebUI。</p></article>
-      </div>
+  <section class="stats reveal">
+    <div><b>60–185<span>Hz</span></b><em>固定档位</em></div>
+    <div><b>3<span>层</span></b><em>锁帧 + 回读核验</em></div>
+    <div><b>0<span>个</span></b><em>虚假高刷档位</em></div>
+    <div title="总下载 = GitHub Release 下载 + 网页下载实时计数；同一人重复下载会重复计数，不等于独立用户数"><b id="dlStat">28</b><em>总下载</em></div>
+  </section>
+
+  <section class="section" id="features">
+    <div class="sec-head reveal">
+      <span class="eyebrow"><i></i> FEATURES</span>
+      <h2>该有的都有，<br>不该吹的不吹。</h2>
+      <p>固定、动态、触控、WebUI、守护、恢复——围绕“真的生效”做完整闭环。</p>
+    </div>
+    <div class="grid features">
+      <article class="card reveal">
+        <span class="ico"><svg viewBox="0 0 24 24"><path d="M13 2L4.5 13.5H11l-1 8.5L19.5 10H13z"/></svg></span>
+        <h3>60–185Hz 固定档位</h3>
+        <p>自动扫描 SurfaceFlinger 显示模式；机器或超频 DTBO 里有的档位才出现，没有的置灰。</p>
+      </article>
+      <article class="card reveal">
+        <span class="ico"><svg viewBox="0 0 24 24"><path d="M3 15c2.5 0 2.5-6 5-6s2.5 6 5 6 2.5-6 5-6 2.5 6 5 6"/></svg></span>
+        <h3>原生 / 自适应动态</h3>
+        <p>原生：系统按画面内容调度，最省电；自适应：触控升到上限，静止 3 秒回到下限。底层锁不可用时自动改用 Settings 动态，不依赖小米 1035。</p>
+      </article>
+      <article class="card reveal">
+        <span class="ico"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg></span>
+        <h3>底层锁帧 + 回读核验</h3>
+        <p>SurfaceFlinger 1035 底层锁，压住应用帧率投票；每次应用后回读实际刷新率，UI 显示“已核验”才算锁上。</p>
+      </article>
+      <article class="card reveal">
+        <span class="ico"><svg viewBox="0 0 24 24"><path d="M9 11V5.5a1.5 1.5 0 0 1 3 0V11M12 11V4.5a1.5 1.5 0 0 1 3 0V11M15 11V6.5a1.5 1.5 0 0 1 3 0V14a6 6 0 0 1-6 6h-1.6a5 5 0 0 1-3.7-1.7L5 15.5a1.6 1.6 0 0 1 2.4-2l1.6 1.6"/></svg></span>
+        <h3>触控加速</h3>
+        <p>高通 touchboost、CPU input boost、MTK fpsgo、Adreno idler、触控 HAL 提权；电竞模式再加 GPU 与调度 boost。</p>
+      </article>
+      <article class="card reveal">
+        <span class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14" rx="3"/><path d="M8 21h8M12 18v3"/></svg></span>
+        <h3>玻璃拟态 WebUI</h3>
+        <p>自动 / 浅色 / 深色三档主题，实时状态、节点列表、日志、扫描、恢复都在一个页面里完成。</p>
+      </article>
+      <article class="card reveal">
+        <span class="ico"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v6h-6"/></svg></span>
+        <h3>守护与恢复</h3>
+        <p>开机自启、息屏亮屏重锁、漂移检测；所有触控节点写前备份，关闭或卸载逐项还原。</p>
+      </article>
     </div>
   </section>
 
-  <section class="section dark" id="lock">
-    <div class="wrap split">
-      <div class="sec-head reveal">
-        <span class="eyebrow"><i></i> HOW IT WORKS</span>
-        <h2>为什么它敢叫<br>“真·全局”？</h2>
-        <p>只改 peak_refresh_rate，应用一投票就掉回 60。真正的全局锁，要同时做三件事。</p>
-        <a class="text-link" href="#faq">常见问题 <span>→</span></a>
+  <section class="section split" id="lock">
+    <div class="sec-head reveal">
+      <span class="eyebrow"><i></i> HOW IT WORKS</span>
+      <h2>为什么它敢叫<br>“真·全局”？</h2>
+      <p>只改 <code>peak_refresh_rate</code>，应用一投票就掉回 60。真正的全局锁，要同时做三件事。</p>
+      <a class="text-link" href="#faq">常见问题 <span>→</span></a>
+    </div>
+    <div class="lock-card card reveal">
+      <div class="lock-row">
+        <span class="num">01</span>
+        <div><b>框架层</b><p><code>peak_refresh_rate</code> / <code>min_refresh_rate</code>，小米 / 澎湃额外写 <code>user_refresh_rate</code>。</p></div>
       </div>
-      <div class="steps-card reveal">
-        <div class="step-row"><span>01</span><div><b>框架层</b><p>peak_refresh_rate / min_refresh_rate，小米 / 澎湃额外处理 user_refresh_rate。</p></div></div>
-        <div class="step-row"><span>02</span><div><b>底层锁</b><p>SurfaceFlinger 1035 钉住显示模式，压住应用帧率投票；不支持时自动回退。</p></div></div>
-        <div class="step-row"><span>03</span><div><b>回读核验</b><p>读实际刷新率和 active mode，没到目标就重试；仍失败标“未核验”，不假装成功。</p></div></div>
-        <p class="note">原生动态只设区间，不写厂商固定键；固定档才写。动态和固定分开，避免把 LTPO 锁死。</p>
+      <div class="lock-row">
+        <span class="num">02</span>
+        <div><b>底层锁</b><p><code>service call SurfaceFlinger 1035</code>，把显示模式钉死，并让后续 DisplayManager / 应用帧率请求失效。</p></div>
       </div>
+      <div class="lock-row">
+        <span class="num">03</span>
+        <div><b>回读核验</b><p>读 <code>dumpsys display</code> 的实际刷新率与 active mode，没到目标就重试；仍失败就标“待核验”，不假装成功。</p></div>
+      </div>
+      <p class="lock-note">动态区间不再依赖“解除底层锁”：原生模式写回范围；自适应模式直接切换底层模式，所以从小米固定档切回动态也能立即生效，不必重启。</p>
     </div>
   </section>
 
-  <section class="section cream" id="shots">
-    <div class="wrap">
-      <div class="sec-head reveal">
-        <span class="eyebrow dark"><i></i> INTERFACE</span>
-        <h2>界面，也值得单独做。</h2>
-        <p>实时状态、档位、动态区间、触控节点和日志，都在一个安静的面板里。</p>
-      </div>
-      <div class="gallery">
-        <a class="shot wide reveal" href="assets/hero-module.png"><img src="assets/hero-module.png" alt="刷新率页面" loading="lazy"><span>刷新率 · LTPO · 已核验</span></a>
-        <div class="quote reveal"><p>“更新后动态锁 120”不是 UI 猜的，是厂商固定键 + 每 15 秒重写区间。v2.2.10 已经停掉。</p><span>— 维护记录</span></div>
-      </div>
+  <section class="section" id="shots">
+    <div class="sec-head reveal">
+      <span class="eyebrow"><i></i> SCREENSHOTS</span>
+      <h2>界面，也值得单独做。</h2>
+      <p>玻璃拟态、分组列表、系统风格的开关与分段控件；自动 / 浅色 / 深色都做了适配。</p>
+    </div>
+    <div class="shots">
+      <a class="shot reveal" href="assets/poster-1.png"><img src="assets/poster-1.png" alt="封面" loading="lazy"><span>封面 · 浅色 / 深色</span></a>
+      <a class="shot reveal" href="assets/poster-2.png"><img src="assets/poster-2.png" alt="刷新率" loading="lazy"><span>刷新率 · 底层锁</span></a>
+      <a class="shot reveal" href="assets/poster-3.png"><img src="assets/poster-3.png" alt="触控" loading="lazy"><span>动态与触控</span></a>
+      <a class="shot reveal" href="assets/poster-4.png"><img src="assets/poster-4.png" alt="WebUI" loading="lazy"><span>WebUI · 安装</span></a>
     </div>
   </section>
 
-  <section class="section light" id="install">
-    <div class="wrap">
-      <div class="sec-head center reveal">
-        <span class="eyebrow dark"><i></i> INSTALL</span>
-        <h2>三步，装上。</h2>
-        <p>只支持通过 Root 管理器安装；刷入后需要重启一次。</p>
-      </div>
-      <div class="steps">
-        <div class="step reveal"><b>01</b><h3>安装模块</h3><p>Magisk / KernelSU / APatch → 从本地安装 → 选择 zip。</p></div>
-        <div class="step reveal"><b>02</b><h3>重启手机</h3><p>首次开机自动应用面板最高档；之后在 WebUI 改固定 / 动态。</p></div>
-        <div class="step reveal"><b>03</b><h3>打开 WebUI</h3><p>KernelSU / APatch 模块页直接打开；Magisk 装 KsuWebUI 并授予 Root。</p></div>
-      </div>
-      <div class="install-cta reveal">
-        <a class="btn primary big" href="assets/真·全局高刷.zip?v=2.2.10&amp;src=page" download="真·全局高刷.zip" data-dl="hfr">下载 真·全局高刷.zip</a>
-        <span>Android 11+ · 约 42 KB · v2.2.10 · <b id="dlStat">28</b> 次下载</span>
-      </div>
+  <section class="section" id="install">
+    <div class="sec-head center reveal">
+      <span class="eyebrow"><i></i> INSTALL</span>
+      <h2>三步，装上。</h2>
+      <p>只支持通过 Root 管理器安装；刷入后需要重启一次。</p>
+    </div>
+    <div class="steps">
+      <div class="step card reveal"><b>01</b><h3>安装模块</h3><p>Magisk / KernelSU / APatch 管理器 → 从本地安装 → 选择 zip。</p></div>
+      <div class="step card reveal"><b>02</b><h3>重启手机</h3><p>首次开机会自动应用 60Hz–面板最高的动态刷新率，之后可在 WebUI 改固定 / 动态。</p></div>
+      <div class="step card reveal"><b>03</b><h3>打开 WebUI</h3><p>KernelSU / APatch 模块页直接开；Magisk 安装 KsuWebUI 并授予 Root。</p></div>
+    </div>
+    <div class="install-cta reveal">
+      <a class="btn blue big" href="assets/真·全局高刷.zip?v=2.2.10&amp;src=page" download="真·全局高刷.zip" data-dl="hfr">下载 真·全局高刷.zip</a>
+      <span>Android 11+ · 约 42 KB · v2.2.10</span>
     </div>
   </section>
 
-  <section class="section dark" id="changelog">
-    <div class="wrap">
-      <div class="sec-head reveal">
-        <span class="eyebrow"><i></i> CHANGELOG</span>
-        <h2>v2.2.10<br>动态不再被反复顶高。</h2>
-        <p>守护进程先读当前 min/peak，只有被改掉时才补写。日志里不会再每 15 秒出现一次 native range。</p>
+  <section class="section" id="changelog">
+    <div class="sec-head reveal">
+      <span class="eyebrow"><i></i> CHANGELOG</span>
+      <h2>v2.2.10<br>动态不再被反复顶高。</h2>
+      <p>修复守护进程每 15 秒重写 min/peak，把系统 LTPO 调度重新顶到峰值的问题；只有设置被改掉时才补写。</p>
+    </div>
+    <div class="lock-card card reveal" style="margin-bottom:20px">
+      <div class="lock-row">
+        <span class="num">01</span>
+        <div><b>停止每 15 秒重写原生区间</b><p>守护进程先读取当前 min/peak，只有被系统或其他应用改掉时才补写。避免每 15 秒把 LTPO 重新顶到 120 / 165，导致动态看起来失效。</p></div>
       </div>
-      <div class="release-card reveal">
-        <div class="release-top"><span class="tag">LATEST</span><b>v2.2.10</b><a href="https://github.com/yingge-dev/global-hfr/releases/tag/v2.2.10" target="_blank" rel="noopener">Release →</a></div>
-        <div class="release-grid">
-          <div><b>停止周期重写</b><p>原生 LTPO 不再每 15 秒被顶回峰值。</p></div>
-          <div><b>清除厂商固定键</b><p>动态不再写 miui / oplus 固定刷新率，恢复区间调度。</p></div>
-          <div><b>状态接口瘦身</b><p>status 约 0.8KB，触摸节点按需读取，降低“未连接”。</p></div>
-          <div><b>面板最高按 rates</b><p>165Hz 面板不再被 120 模式表误判。</p></div>
-        </div>
+      <div class="lock-row">
+        <span class="num">02</span>
+        <div><b>修复小米 17 动态锁 120</b><p>v2.2.5 原生动态把 miui_refresh_rate 写成峰值，等于硬锁；v2.2.9 起清除厂商固定键，v2.2.10 再停止周期重写。</p></div>
       </div>
+      <div class="lock-row">
+        <span class="num">03</span>
+        <div><b>保留状态瘦身与自动上限</b><p>精简 status、按需读取触摸节点、面板最高从 modes + rates 计算、动态上限可选「面板最高 · 自动」。</p></div>
+      </div>
+      <p class="lock-note">一加 / OPPO 的 165 仍受 ColorOS 白名单限制；模块不会假装突破。</p>
+    </div>
+    <div class="sec-head reveal" style="padding-top:6px">
+      <span class="eyebrow">v2.2.9</span>
+      <h2 style="font-size:24px">动态恢复 LTPO</h2>
+    </div>
+    <div class="lock-card card reveal" style="margin-bottom:20px">
+      <div class="lock-row">
+        <span class="num">01</span>
+        <div><b>原生动态不再写厂商固定键</b><p>v2.2.9 起，原生动态只设置 min_refresh_rate / peak_refresh_rate，并清掉 miui_refresh_rate、oplus_screen_refresh_rate 等固定键，让系统真正按 LTPO 区间调度，而不是被写成全局 165 / 120。</p></div>
+      </div>
+      <div class="lock-row">
+        <span class="num">02</span>
+        <div><b>固定档仍然保留厂商键</b><p>选「全局最高 / 固定档」时才写厂商固定键；动态和固定分开处理，不再互相污染。</p></div>
+      </div>
+      <div class="lock-row">
+        <span class="num">03</span>
+        <div><b>状态与上限优化保留</b><p>status 仍为精简版，触摸节点按需读取；面板最高从 modes + rates 一起算；动态上限可选「面板最高 · 自动」。</p></div>
+      </div>
+      <p class="lock-note">一加 / OPPO 的 165 仍受 ColorOS 白名单和系统策略限制，模块不会假装突破。</p>
+    </div>
+    <div class="sec-head reveal" style="padding-top:6px">
+      <span class="eyebrow">v2.2.8</span>
+      <h2 style="font-size:24px">状态瘦身与自动上限</h2>
+    </div>
+    <div class="lock-card card reveal" style="margin-bottom:20px">
+      <div class="lock-row">
+        <span class="num">01</span>
+        <div><b>状态接口瘦身</b><p>status 不再携带触摸节点和完整模式表，从约 1.6KB 降到约 0.8KB；触摸节点改为按需读取，降低 WebUI 输出被截断导致「未连接」的概率。</p></div>
+      </div>
+      <div class="lock-row">
+        <span class="num">02</span>
+        <div><b>面板最高从 rates 一起算</b><p>显示模式没有列出的速率，只要系统 rates 上报了，也会计入面板最高；避免 165Hz 面板被误判成 120Hz。</p></div>
+      </div>
+      <div class="lock-row">
+        <span class="num">03</span>
+        <div><b>动态上限「自动」</b><p>动态刷新上限新增「面板最高 · 自动」，按当前手机真实最高档位生效，不再固定写死 120 / 165。</p></div>
+      </div>
+      <div class="lock-row">
+        <span class="num">04</span>
+        <div><b>安装权限回退更兼容</b><p>安装脚本的权限回退改用逐文件 chmod，兼容部分 APatch / 旧 toybox 环境。</p></div>
+      </div>
+      <p class="lock-note">v2.2.8 不改底层锁帧策略；一加 / OPPO 的 165 白名单仍由厂商系统决定。</p>
+    </div>
+    <div class="sec-head reveal" style="padding-top:6px">
+      <span class="eyebrow">v2.2.7</span>
+      <h2 style="font-size:24px">状态显示修复</h2>
+    </div>
+    <div class="lock-card card reveal" style="margin-bottom:20px">
+      <div class="lock-row">
+        <span class="num">01</span>
+        <div><b>兼容模式不再显示「已核验」</b><p>WebUI 只认引擎回读的 verified，不再因为 current==target 自动升级为已核验；一加 13 / 15 这类兼容模式会如实显示「未核验」。</p></div>
+      </div>
+      <div class="lock-row">
+        <span class="num">02</span>
+        <div><b>状态错误页不再铺原始 JSON</b><p>引擎返回异常时只显示友好提示并自动重试一次，不再把一长串 JSON 直接塞进状态卡。</p></div>
+      </div>
+      <div class="lock-row">
+        <span class="num">03</span>
+        <div><b>状态解析更稳</b><p>status 单独屏蔽 stderr，并支持逐行提取 JSON，避免日志/警告混进输出导致整页未连接。</p></div>
+      </div>
+      <p class="lock-note">v2.2.7 只修 WebUI 状态显示，不动刷新率锁定逻辑。</p>
+    </div>
+    <div class="sec-head reveal" style="padding-top:6px">
+      <span class="eyebrow">v2.2.6</span>
+      <h2 style="font-size:24px">60Hz 不再误判</h2>
+    </div>
+    <div class="lock-card card reveal" style="margin-bottom:20px">
+      <div class="lock-row">
+        <span class="num">01</span>
+        <div><b>60Hz 不再误判为不支持</b><p>Xiaomi 17 这类 120Hz LTPO 面板的 60Hz 可能只在设置层上报，没有独立 SurfaceFlinger 模式；现在会把 panel.rates 一起算进 UI 和固定档。</p></div>
+      </div>
+      <div class="lock-row">
+        <span class="num">02</span>
+        <div><b>无模式 ID 也能固定</b><p>系统上报支持、但 pick_mode 找不到对应模式时，固定档改为走 Settings（min=peak=目标），不再直接报「未检测到档位」。</p></div>
+      </div>
+      <div class="lock-row">
+        <span class="num">03</span>
+        <div><b>保留 20 / 24 / 30 / 40Hz</b><p>系统真正上报的低速率会进入档位列表；没上报的不会硬写，仍然不做无效档位。</p></div>
+      </div>
+      <p class="lock-note">v2.2.6 只修速率来源和 60Hz 固定路径，不改 1035 底层锁策略。</p>
+    </div>
+    <div class="sec-head reveal" style="padding-top:6px">
+      <span class="eyebrow">v2.2.5</span>
+      <h2 style="font-size:24px">异常档位过滤</h2>
+    </div>
+    <div class="lock-card card reveal" style="margin-bottom:20px">
+      <div class="lock-row">
+        <span class="num">01</span>
+        <div><b>过滤异常 360Hz 档位</b><p>Xiaomi 17 Pro 这类 120Hz 面板被扫出 360Hz 虚拟/误读档位时，不再显示也不允许锁定；只保留 240Hz 以内的可信速率。</p></div>
+      </div>
+      <div class="lock-row">
+        <span class="num">02</span>
+        <div><b>旧面板数据自动迁移</b><p>升级后如果旧 panel.conf 里还留着 360Hz 上限，会重新扫描并修正；不会继续按异常档位工作。</p></div>
+      </div>
+      <div class="lock-row">
+        <span class="num">03</span>
+        <div><b>触控节点如实显示</b><p>只写真实存在且写入成功的节点；只有 1 项生效说明这台机器只暴露了 1 个可用节点，不会补假节点。</p></div>
+      </div>
+      <p class="lock-note">v2.2.5 只做异常档位修正，不改变正常的 60–185Hz 锁定逻辑。</p>
+    </div>
+    <div class="sec-head reveal" style="padding-top:6px">
+      <span class="eyebrow">v2.2.4</span>
+      <h2 style="font-size:24px">掉 60 自动拉回</h2>
+    </div>
+    <div class="lock-card card reveal" style="margin-bottom:20px">
+      <div class="lock-row">
+        <span class="num">01</span>
+        <div><b>固定档失败继续回退</b><p>SurfaceFlinger 底层锁回读不到目标刷新率时，不再直接返回「未确认」；继续尝试 DisplayManager 和标准 Settings，最后才标记兼容模式。</p></div>
+      </div>
+      <div class="lock-row">
+        <span class="num">02</span>
+        <div><b>掉 60 自动拉回</b><p>固定档守护从 30 秒一次改为每 2 秒检查实际刷新率；抖音、B 站等应用把帧率压到 60 时，自动重新应用固定档。</p></div>
+      </div>
+      <div class="lock-row">
+        <span class="num">03</span>
+        <div><b>折叠屏 / 多显示模式更稳</b><p>底层模式回读失败时不再卡死，给小米 MIX Flip 2 这类 1035 不生效的机型留出设置与 DisplayManager 回退路径。</p></div>
+      </div>
+      <p class="lock-note">v2.2.4 只改固定档回退与守护频率，不动动态下限识别。</p>
+    </div>
+    <div class="sec-head reveal" style="padding-top:6px">
+      <span class="eyebrow">v2.2.3</span>
+      <h2 style="font-size:24px">下载按钮修复</h2>
+    </div>
+    <div class="lock-card card reveal" style="margin-bottom:20px">
+      <div class="lock-row">
+        <span class="num">01</span>
+        <div><b>更新弹窗下载按钮可用</b><p>「浏览器下载 v2.2.3」不再用普通 <code>&lt;a target="_blank"&gt;</code>；改为 <code>am start</code> 调起系统浏览器，调起失败自动跳项目主页安装区。</p></div>
+      </div>
+      <div class="lock-row">
+        <span class="num">02</span>
+        <div><b>GitHub 发布页同样处理</b><p>发布页按钮也走同一套外部打开逻辑，不再在 WebView 里点了没反应。</p></div>
+      </div>
+      <div class="lock-row">
+        <span class="num">03</span>
+        <div><b>下载与主页职责分开</b><p>弹窗下载直接给 Release 包；底栏「主页」负责说明、更新日志和中文文件名下载，不重复。</p></div>
+      </div>
+      <p class="lock-note">v2.2.3 只修 WebUI 更新弹窗的两个外部按钮，不动刷新率策略。</p>
+    </div>
+    <div class="sec-head reveal" style="padding-top:6px">
+      <span class="eyebrow">v2.2.2</span>
+      <h2 style="font-size:24px">主页入口</h2>
+    </div>
+    <div class="lock-card card reveal" style="margin-bottom:20px">
+      <div class="lock-row">
+        <span class="num">01</span>
+        <div><b>底栏新增「主页」入口</b><p>底栏从 3 个变 4 个，任何页面都能一键打开项目主页；外观、位置和设置页不变。</p></div>
+      </div>
+      <div class="lock-row">
+        <span class="num">02</span>
+        <div><b>KernelSU / APatch 打开外部浏览器</b><p>优先用 root 的 <code>am start</code> 调起系统浏览器，失败时回退普通链接，不在 WebView 里卡住。</p></div>
+      </div>
+      <div class="lock-row">
+        <span class="num">03</span>
+        <div><b>代码审计</b><p>检查 tab 切换、外部链接回调、未使用状态字段和无用逻辑；语法检查通过后再发版。</p></div>
+      </div>
+      <p class="lock-note">v2.2.2 只改 WebUI 入口与外部跳转，不动刷新率策略。</p>
+    </div>
+    <div class="sec-head reveal" style="padding-top:6px">
+      <span class="eyebrow">v2.2.1</span>
+      <h2 style="font-size:24px">清理与核验</h2>
+    </div>
+    <div class="lock-card card reveal" style="margin-bottom:20px">
+      <div class="lock-row">
+        <span class="num">01</span>
+        <div><b>删除无效的触控采样率写入</b><p>部分机型节点只可写、不可回读，无法确认是否生效；v2.2.1 移除该功能，不再把“写入成功”当成“采样率已提升”。</p></div>
+      </div>
+      <div class="lock-row">
+        <span class="num">02</span>
+        <div><b>固定档加回读核验</b><p>小米底层锁也会回读实际刷新率，确认不到就显示「未确认」，不再默认成功。</p></div>
+      </div>
+      <div class="lock-row">
+        <span class="num">03</span>
+        <div><b>深度锁帧按能力显示</b><p>没有 SurfaceFlinger 底层锁的机型隐藏该开关，避免无效选项。</p></div>
+      </div>
+      <div class="lock-row">
+        <span class="num">04</span>
+        <div><b>清理残留配置</b><p>移除 sampling 配置、状态字段与切换入口；旧配置文件里的旧键会被忽略。</p></div>
+      </div>
+      <p class="lock-note">v2.2.1 不改变 30 / 60 / 90 下限识别逻辑；只做真实性清理与固定档核验。</p>
+    </div>
+    <div class="sec-head reveal" style="padding-top:6px">
+      <span class="eyebrow">v2.2.0</span>
+      <h2 style="font-size:24px">动态下限细化</h2>
+    </div>
+    <div class="lock-card card reveal" style="margin-bottom:20px">
+      <div class="lock-row">
+        <span class="num">01</span>
+        <div><b>动态下限支持 30 / 60 / 90Hz</b><p>按 <code>mSupportedRefreshRates</code> 自动生成下限；面板上报 30Hz 才显示 30，未上报就自动隐藏，不写无效档位。</p></div>
+      </div>
+      <div class="lock-row">
+        <span class="num">02</span>
+        <div><b>新增 30–60 / 90 / 120 / 144 / 165 / 185 预设</b><p>按面板实际档位过滤；没有 185 的屏幕不会出现 30–185。60 / 90 / 120 起步的区间继续保留。</p></div>
+      </div>
+      <div class="lock-row">
+        <span class="num">03</span>
+        <div><b>30Hz 自动走设置引擎</b><p>没有 30Hz 显示模式、但系统支持 30Hz 下限的机型，自适应改用 <code>min_refresh_rate</code> 切换，不强行调不存在的 1035 档位。</p></div>
+      </div>
+      <div class="lock-row">
+        <span class="num">04</span>
+        <div><b>界面更紧凑</b><p>动态下限 / 上限选项按真实速率生成；预设控制在两行内，切换仍然即点即用。</p></div>
+      </div>
+      <p class="lock-note">v2.2 只动动态刷新率；全局固定档保持 v2.1 的逻辑，暂无用户反馈 bug。</p>
+    </div>
+    <div class="sec-head reveal" style="padding-top:6px">
+      <span class="eyebrow">v2.1.0</span>
+      <h2 style="font-size:24px">兼容性重构</h2>
+    </div>
+    <div class="lock-card card reveal" style="margin-bottom:20px">
+      <div class="lock-row">
+        <span class="num">01</span>
+        <div><b>能力自检</b><p>检测 SurfaceFlinger 底层锁、DisplayManager <code>cmd display</code>、厂商刷新率键与系统原生上限；WebUI 设置页可随时重新自检。</p></div>
+      </div>
+      <div class="lock-row">
+        <span class="num">02</span>
+        <div><b>固定档三级回退</b><p>Settings → DisplayManager → SurfaceFlinger；每一步回读实际刷新率，全部失败就标「兼容模式」，不谎称已锁定。</p></div>
+      </div>
+      <div class="lock-row">
+        <span class="num">03</span>
+        <div><b>通用自适应</b><p>没有 1035 底层锁的机型，自适应改用 <code>min_refresh_rate</code> / <code>peak_refresh_rate</code> 切换：触控升上限，静止回下限。</p></div>
+      </div>
+      <div class="lock-row">
+        <span class="num">04</span>
+        <div><b>厂商键自动发现</b><p>HyperOS 的 <code>miui_refresh_rate</code>、OPPO / 一加 / realme 的厂商键，存在才写入，写前备份；不存在就只用标准 peak / min。</p></div>
+      </div>
+      <div class="lock-row">
+        <span class="num">05</span>
+        <div><b>按系统上限给建议</b><p>读取 <code>mLockedMaxRefreshRate</code>；原生动态跑不满面板时自动推荐自适应，165Hz 不再只有固定档一条路。</p></div>
+      </div>
+      <p class="lock-note">其他品牌 / 系统：只要是 Android 11+ 且支持标准 DisplayManager / Settings 接口，就能至少解锁档位与动态；具体能否锁死取决于 ROM 是否暴露对应接口，自检页会直接告诉你。</p>
+    </div>
+    <div class="sec-head reveal" style="padding-top:6px">
+      <span class="eyebrow">v2.0.0</span>
+      <h2 style="font-size:24px">动态刷新率修复</h2>
+    </div>
+    <div class="lock-card card reveal">
+      <div class="lock-row">
+        <span class="num">01</span>
+        <div><b>动态真的会降到 60 了</b><p>补充 HyperOS <code>miui_refresh_rate</code>，修复静态画面不降频；新增自适应引擎，触控升上限、静止 3 秒回下限。</p></div>
+      </div>
+      <div class="lock-row">
+        <span class="num">02</span>
+        <div><b>60–165Hz 动态可用</b><p>系统策略把原生动态限制在 120Hz 时，自适应模式直接切换底层模式，60 / 120 / 144 / 165 全档可用。</p></div>
+      </div>
+      <div class="lock-row">
+        <span class="num">03</span>
+        <div><b>固定 → 动态不再卡死</b><p>底层锁残留会自动识别：切动态自动走自适应，立即生效；切原生会提示重启一次，不再假装成功。</p></div>
+      </div>
+      <div class="lock-row">
+        <span class="num">04</span>
+        <div><b>WebUI 延迟从秒级降到 0.2s</b><p>状态查询改为缓存文件 + 内置解析，不再每次轮询都跑 <code>dumpsys</code>；切换档位单进程完成。</p></div>
+      </div>
+      <div class="lock-row">
+        <span class="num">05</span>
+        <div><b>按机型识别 + 检查更新</b><p>自动识别系统原生上限、面板档位与厂商；WebUI 新增动态实现选择、静止降频时间、GitHub 新版本提示与更新日志。</p></div>
+      </div>
+      <p class="lock-note">已知限制：部分 HyperOS 机型把 165Hz 作为“底层增强模式”，系统原生动态最高 120Hz；需要 165Hz 动态请选「自适应」或「全局最高」。</p>
     </div>
   </section>
 
-  <section class="section cream" id="feedback">
-    <div class="wrap">
-      <div class="sec-head reveal">
-        <span class="eyebrow dark"><i></i> FEEDBACK</span>
-        <h2>有问题，直接开聊。</h2>
-        <p>机型兼容、锁不住、掉 60、触控节点……统一发到 GitHub Issue，支持截图和评论回复。</p>
-      </div>
-      <div class="fb-grid">
-        <a class="fb-card reveal" href="https://github.com/yingge-dev/global-hfr/issues/new?template=bug_report.yml" target="_blank" rel="noopener"><span class="tag">BUG / 机型反馈</span><h3>提交一个问题</h3><p>带上机型、系统、自检结果和日志，方便统一复现。</p><b>去 GitHub 发 Issue →</b></a>
-        <a class="fb-card reveal" href="https://github.com/yingge-dev/global-hfr/issues" target="_blank" rel="noopener"><span class="tag">SEARCH</span><h3>查看已有反馈</h3><p>先搜同机型、同现象，避免重复提交。</p><b>打开 Issues →</b></a>
-      </div>
-      <p class="fb-note">建议附：手机型号 / ROM / 模块版本 / 复现步骤 / 兼容性自检 / 运行日志。不要填写 IMEI、序列号等隐私信息。</p>
+  <section class="section" id="feedback">
+    <div class="sec-head">
+      <span class="eyebrow"><i></i> FEEDBACK</span>
+      <h2>有问题，直接开聊。</h2>
+      <p>机型兼容、锁不住、掉 60、触控节点……统一发到 GitHub Issue。支持截图和评论回复，不用加微信或 QQ。</p>
+    </div>
+    <div class="feedback-grid">
+      <a class="fb-card primary" href="https://github.com/yingge-dev/global-hfr/issues/new?template=bug_report.yml" target="_blank" rel="noopener">
+        <span class="fb-badge">BUG / 机型反馈</span>
+        <b>提交一个问题</b>
+        <em>带上机型、系统、自检结果和日志，方便统一复现</em>
+        <i>去 GitHub 发 Issue →</i>
+      </a>
+      <a class="fb-card" href="https://github.com/yingge-dev/global-hfr/issues" target="_blank" rel="noopener">
+        <span class="fb-badge">SEARCH</span>
+        <b>查看已有反馈</b>
+        <em>先搜同机型、同现象，避免重复提交</em>
+        <i>打开 Issues →</i>
+      </a>
+    </div>
+    <div class="feedback-note">
+      <b>建议附上：</b>手机型号 / ROM / 模块版本 / 复现步骤 / 兼容性自检 / 运行日志。
+      <span>不要填写 IMEI、序列号、账号等隐私信息；所有回复都在 Issue 里公开进行。</span>
     </div>
   </section>
 
-  <section class="section light" id="faq">
-    <div class="wrap">
-      <div class="sec-head reveal"><span class="eyebrow dark"><i></i> FAQ</span><h2>先把话说清楚。</h2></div>
-      <div class="faq-grid">
-        <details><summary>动态刷新为什么看起来像锁 120？</summary><p>v2.2.5 曾把 miui_refresh_rate 写成峰值，等于硬锁；v2.2.9 起清除厂商固定键，v2.2.10 停止每 15 秒重写区间。</p></details>
-        <details><summary>一加 15 为什么没有 165？</summary><p>ColorOS 有 extremeHighRate 白名单，应用不在列表里系统就不给 165。模块不会假装突破。</p></details>
-        <details><summary>为什么触控只有一项？</summary><p>模块只写真实存在且写入成功的节点；没有的 boost 接口不会补假项。只有触控 HAL 生效说明内核就暴露了这一个入口。</p></details>
-        <details><summary>怎么恢复系统默认？</summary><p>WebUI → 设置 → 恢复系统默认，或卸载模块后重启；改动都有备份。</p></details>
-      </div>
+  <section class="section" id="faq">
+    <div class="sec-head reveal">
+      <span class="eyebrow"><i></i> FAQ</span>
+      <h2>先把话说明白。</h2>
+    </div>
+    <div class="faq">
+      <details class="reveal"><summary>为什么我的 144 / 165 / 185Hz 是灰的？</summary><p>模块只能锁定设备真实存在的显示模式。面板原生 120Hz 的机器不会凭空出现 144/165/185；刷了超频 DTBO 并被扫描到，才会出现并标注 OC。没有的档位不会假装支持。</p></details>
+      <details class="reveal"><summary>会不会和 dfps、Astra 之类的高刷模块冲突？</summary><p>会。它们都在改 peak_refresh_rate 和 SurfaceFlinger 策略，同时开会互相覆盖，表现为跳档、锁不住、耗电异常。请只保留一个。</p></details>
+      <details class="reveal"><summary>为什么动态区间静止时会掉到很低？</summary><p>把下限设为 10/30 时，LTPO 在静态画面会进入低刷新率省电，这是正常的；希望静止也保持 60，把下限设为 60 即可。</p></details>
+      <details class="reveal"><summary>触控采样率真的会变高吗？</summary><p>模块不会修改触控 IC 固件，也不谎称提升采样率。它做的是输入 boost、触控 HAL 提权、GPU 频率策略和调度 boost，缩短“触摸 → 渲染 → 上屏”的链路；采样率由屏幕与厂商 HAL 决定。</p></details>
+      <details class="reveal"><summary>耗电会不会变高？</summary><p>固定 165/185Hz 全程锁死必然更耗电。日常建议动态区间或 120Hz；电竞触控也会提高 GPU/调度功耗。可以先试动态模式。</p></details>
+      <details class="reveal"><summary>出问题怎么恢复？</summary><p>WebUI → 设置 → 恢复系统默认；或直接在管理器卸载模块并重启。卸载脚本会还原刷新率设置、逐项还原触控节点、关闭浮层与底层锁。</p></details>
+      <details class="reveal"><summary>截图里为什么写“界面示意”？</summary><p>因为那些图是浏览器渲染的界面预览，不是真机实拍。模块的实际效果取决于机型、ROM 和内核，建议以自己设备上的“已核验”状态和帧率浮窗为准。</p></details>
+      <details class="reveal"><summary>为什么我的动态下限没有 30Hz？</summary><p>30Hz 不是每块面板都支持。v2.2 读取系统上报的 <code>mSupportedRefreshRates</code>，只有面板真的上报 30Hz 才显示 30 选项；没上报就不会写一个无效档位。同理，90 / 144 / 185 也按真实档位出现。</p></details>
+      <details class="reveal"><summary>其他品牌 / 其他系统能用吗？</summary><p>模块按能力而不是按机型写死：先尝试 Settings 的 <code>peak</code> / <code>min</code>，再试 DisplayManager <code>cmd display</code>，最后才用厂商底层锁。WebUI → 设置 → 兼容性自检会列出本机支持哪些接口。Android 11+ 且 ROM 保留标准接口的机型都能至少解锁与动态；能否锁死取决于 ROM 是否真的接受这些接口，模块不会假装成功。</p></details>
+      <details class="reveal"><summary>为什么原生动态最高只有 120Hz，面板明明是 165Hz？</summary><p>部分 HyperOS 把 144 / 165Hz 作为底层增强档，系统策略的 <code>mLockedMaxRefreshRate</code> 只允许 120Hz。WebUI 会显示「系统上限」；要跑满 165Hz 动态，请把动态实现切到「自适应」，或使用「全局最高」。</p></details>
+      <details class="reveal"><summary>刷了旧版，怎么知道有新版？</summary><p>模块内置 <code>updateJson</code>，KernelSU / APatch / Magisk 的模块页会显示更新角标；新版 WebUI 也会在打开时检查 GitHub 并在顶部显示新版本提示。每次发版都会更新 <code>update.json</code> 与本页更新日志。</p></details>
     </div>
   </section>
 
-  <section class="final">
-    <div class="wrap center">
-      <span class="eyebrow"><i></i> READY</span>
-      <h2>把该属于你的刷新率，<br>拿回来。</h2>
+  <section class="final reveal">
+    <div class="final-card">
+      <span class="mark big">颖</span>
+      <h2>真·全局高刷</h2>
+      <p>小米 / OPPO / 一加全平台 · 60–185Hz · 动态刷新 · 触控增强</p>
       <div class="cta center">
-        <a class="btn primary" href="assets/真·全局高刷.zip?v=2.2.10&amp;src=page" download="真·全局高刷.zip" data-dl="hfr">下载模块</a>
-        <a class="btn ghost" data-repo href="https://github.com/yingge-dev/global-hfr" target="_blank" rel="noopener">GitHub</a>
+        <a class="btn blue" href="assets/真·全局高刷.zip?v=2.2.10&amp;src=page" download="真·全局高刷.zip" data-dl="hfr">下载模块</a>
+        <a class="btn glass" data-repo href="https://github.com/yingge-dev/global-hfr" target="_blank" rel="noopener">GitHub</a>
       </div>
       <p class="tiny">作者：颖哥 · MIT License · 刷机有风险，请先备份</p>
     </div>
@@ -219,26 +546,40 @@
 </main>
 
 <footer>
-  <div class="wrap foot">
+  <div class="foot">
     <span>© 2026 颖哥 · 真·全局高刷</span>
-    <span>非官方模块 · 与小米 / OPPO / 一加 / realme 无隶属关系</span>
+    <span>非官方模块 · 与小米 / OPPO / 一加无隶属关系</span>
   </div>
 </footer>
 
 <div class="lightbox" id="lightbox" aria-hidden="true"><img alt=""><button aria-label="关闭">×</button></div>
-
 <button class="assistant-fab" id="assistantFab" type="button" aria-label="打开高刷助手">
-  <svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg><span>助手</span>
+  <svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg>
+  <span>助手</span>
 </button>
+
 <div class="assistant-panel" id="assistantPanel" hidden>
-  <div class="assistant-head"><div class="assistant-title"><span class="assistant-mark">颖</span><div><b>高刷助手</b><em>本地规则回复 · 不联网</em></div></div><button type="button" class="assistant-close" id="assistantClose" aria-label="关闭">×</button></div>
+  <div class="assistant-head">
+    <div class="assistant-title"><span class="assistant-mark">颖</span><div><b>高刷助手</b><em>本地规则回复 · 不联网</em></div></div>
+    <button type="button" class="assistant-close" id="assistantClose" aria-label="关闭">×</button>
+  </div>
   <div class="assistant-msgs" id="assistantMsgs"></div>
   <div class="assistant-quick" id="assistantQuick">
-    <button type="button" data-q="怎么安装">怎么安装</button><button type="button" data-q="锁不住">锁不住</button><button type="button" data-q="掉60">掉 60</button><button type="button" data-q="30Hz">30Hz</button><button type="button" data-q="触控节点">触控</button><button type="button" data-q="反馈">反馈 Bug</button>
+    <button type="button" data-q="怎么安装">怎么安装</button>
+    <button type="button" data-q="锁不住">锁不住</button>
+    <button type="button" data-q="掉60">掉 60</button>
+    <button type="button" data-q="30Hz">30Hz</button>
+    <button type="button" data-q="触控节点">触控</button>
+    <button type="button" data-q="反馈">反馈 Bug</button>
   </div>
-  <form class="assistant-form" id="assistantForm"><input id="assistantInput" type="text" autocomplete="off" placeholder="描述你的问题…" aria-label="输入问题"><button type="submit" aria-label="发送">↑</button></form>
+  <form class="assistant-form" id="assistantForm">
+    <input id="assistantInput" type="text" autocomplete="off" placeholder="描述你的问题…" aria-label="输入问题">
+    <button type="submit" aria-label="发送">↑</button>
+  </form>
 </div>
+
 <script src="assistant.js?v=20261103a"></script>
-<script src="app.js?v=20261116a"></script>
+
+<script src="app.js?v=20261103a"></script>
 </body>
 </html>
