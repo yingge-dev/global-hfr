@@ -50,8 +50,8 @@ if [ -f "$MODDIR/module.prop" ]; then
         esac
     done < "$MODDIR/module.prop"
 fi
-[ -n "$VER" ] || VER=v2.2.9
-is_num "$VC" || VC=20209
+[ -n "$VER" ] || VER=v2.2.10
+is_num "$VC" || VC=20210
 
 [ -d "$DATA" ] || mkdir -p "$DATA" 2>/dev/null
 
@@ -1398,7 +1398,13 @@ run_daemon() {
                 if ! is_num "$hi" || [ "$hi" -eq 0 ]; then hi=$(max_hz); fi
                 [ -n "$hi" ] || hi=120
                 [ "$hi" -le "$lo" ] && hi=$((lo + 30))
-                apply_native_range "$lo" "$hi"
+                # 原生 LTPO 不能每 15 秒重写一次区间，否则会把系统调度重新顶到 peak。
+                # 只有设置真的被别的应用/系统改掉时才补写。
+                cur_lo=$(settings get system min_refresh_rate 2>/dev/null | tr -d '\r\n')
+                cur_hi=$(settings get system peak_refresh_rate 2>/dev/null | tr -d '\r\n')
+                if [ "$cur_lo" != "$lo" ] || [ "$cur_hi" != "$hi" ]; then
+                    apply_native_range "$lo" "$hi"
+                fi
             fi
             prev_screen=on
         else

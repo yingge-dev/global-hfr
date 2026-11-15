@@ -98,8 +98,8 @@
   var DEMO = {
     ok: 1,
     ts: Math.floor(Date.now() / 1000),
-    version: 'v2.2.9',
-    versionCode: 20209,
+    version: 'v2.2.10',
+    versionCode: 20210,
     device: {
       brand: 'OnePlus', model: 'PJZ110', market: 'OnePlus 13',
       rom: 'ColorOS 15.0.1', android: '15', sdk: 35,

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#eef3fa" id="themeColor">
-<meta name="description" content="真·全局高刷 v2.2.9：小米 / OPPO / 一加 / realme 与通用机型，能力自检 + 多级回退，60–185Hz 固定档位，原生 / 自适应动态刷新率，触控加速与玻璃拟态 WebUI。">
+<meta name="description" content="真·全局高刷 v2.2.10：小米 / OPPO / 一加 / realme 与通用机型，能力自检 + 多级回退，60–185Hz 固定档位，原生 / 自适应动态刷新率，触控加速与玻璃拟态 WebUI。">
 <title>真·全局高刷 · 小米 / OPPO / 一加全平台</title>
 <link rel="stylesheet" href="style.css?v=20261103a">
 
@@ -75,16 +75,16 @@
 <main id="top">
   <div class="release-bar" id="releaseBar">
     <span class="rb-dot"></span>
-    <div><b id="releaseTitle">v2.2.9 已发布</b><em id="releaseDesc">动态原生恢复 LTPO，不再写死厂商固定键</em></div>
+    <div><b id="releaseTitle">v2.2.10 已发布</b><em id="releaseDesc">原生动态不再每 15 秒重写区间</em></div>
     <a href="#changelog">更新内容 →</a>
   </div>
   <section class="hero">
     <div class="hero-copy">
-      <span class="eyebrow"><i></i> v2.2.9 · Android 11+ · Magisk / KernelSU / APatch</span>
+      <span class="eyebrow"><i></i> v2.2.10 · Android 11+ · Magisk / KernelSU / APatch</span>
       <h1>把高刷，<br><span>锁进系统底层。</span></h1>
-      <p class="lead">真·全局高刷 v2.2.9。动态下限支持 30 / 60 / 90Hz，按面板上报自动识别；能力自检 + 多级回退，按机型选择可用的锁帧 / 动态接口；60–185Hz 固定档位，原生 / 自适应双动态引擎，静止降下限、触控回峰值。不是只写一个 <code>settings</code> 就自称全局。</p>
+      <p class="lead">真·全局高刷 v2.2.10。动态下限支持 30 / 60 / 90Hz，按面板上报自动识别；能力自检 + 多级回退，按机型选择可用的锁帧 / 动态接口；60–185Hz 固定档位，原生 / 自适应双动态引擎，静止降下限、触控回峰值。不是只写一个 <code>settings</code> 就自称全局。</p>
       <div class="cta">
-        <a class="btn blue" href="assets/真·全局高刷.zip?v=2.2.9&amp;src=page" download="真·全局高刷.zip" data-dl="hfr">
+        <a class="btn blue" href="assets/真·全局高刷.zip?v=2.2.10&amp;src=page" download="真·全局高刷.zip" data-dl="hfr">
           <svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></svg>
           下载模块
         </a>
@@ -201,16 +201,35 @@
       <div class="step card reveal"><b>03</b><h3>打开 WebUI</h3><p>KernelSU / APatch 模块页直接开；Magisk 安装 KsuWebUI 并授予 Root。</p></div>
     </div>
     <div class="install-cta reveal">
-      <a class="btn blue big" href="assets/真·全局高刷.zip?v=2.2.9&amp;src=page" download="真·全局高刷.zip" data-dl="hfr">下载 真·全局高刷.zip</a>
-      <span>Android 11+ · 约 42 KB · v2.2.9</span>
+      <a class="btn blue big" href="assets/真·全局高刷.zip?v=2.2.10&amp;src=page" download="真·全局高刷.zip" data-dl="hfr">下载 真·全局高刷.zip</a>
+      <span>Android 11+ · 约 42 KB · v2.2.10</span>
     </div>
   </section>
 
   <section class="section" id="changelog">
     <div class="sec-head reveal">
       <span class="eyebrow"><i></i> CHANGELOG</span>
-      <h2>v2.2.9<br>动态恢复 LTPO。</h2>
-      <p>修复原生动态把 miui_refresh_rate / oplus_screen_refresh_rate 写成高刷，导致区间调度变成硬锁的问题。</p>
+      <h2>v2.2.10<br>动态不再被反复顶高。</h2>
+      <p>修复守护进程每 15 秒重写 min/peak，把系统 LTPO 调度重新顶到峰值的问题；只有设置被改掉时才补写。</p>
+    </div>
+    <div class="lock-card card reveal" style="margin-bottom:20px">
+      <div class="lock-row">
+        <span class="num">01</span>
+        <div><b>停止每 15 秒重写原生区间</b><p>守护进程先读取当前 min/peak，只有被系统或其他应用改掉时才补写。避免每 15 秒把 LTPO 重新顶到 120 / 165，导致动态看起来失效。</p></div>
+      </div>
+      <div class="lock-row">
+        <span class="num">02</span>
+        <div><b>修复小米 17 动态锁 120</b><p>v2.2.5 原生动态把 miui_refresh_rate 写成峰值，等于硬锁；v2.2.9 起清除厂商固定键，v2.2.10 再停止周期重写。</p></div>
+      </div>
+      <div class="lock-row">
+        <span class="num">03</span>
+        <div><b>保留状态瘦身与自动上限</b><p>精简 status、按需读取触摸节点、面板最高从 modes + rates 计算、动态上限可选「面板最高 · 自动」。</p></div>
+      </div>
+      <p class="lock-note">一加 / OPPO 的 165 仍受 ColorOS 白名单限制；模块不会假装突破。</p>
+    </div>
+    <div class="sec-head reveal" style="padding-top:6px">
+      <span class="eyebrow">v2.2.9</span>
+      <h2 style="font-size:24px">动态恢复 LTPO</h2>
     </div>
     <div class="lock-card card reveal" style="margin-bottom:20px">
       <div class="lock-row">
@@ -518,7 +537,7 @@
       <h2>真·全局高刷</h2>
       <p>小米 / OPPO / 一加全平台 · 60–185Hz · 动态刷新 · 触控增强</p>
       <div class="cta center">
-        <a class="btn blue" href="assets/真·全局高刷.zip?v=2.2.9&amp;src=page" download="真·全局高刷.zip" data-dl="hfr">下载模块</a>
+        <a class="btn blue" href="assets/真·全局高刷.zip?v=2.2.10&amp;src=page" download="真·全局高刷.zip" data-dl="hfr">下载模块</a>
         <a class="btn glass" data-repo href="https://github.com/yingge-dev/global-hfr" target="_blank" rel="noopener">GitHub</a>
       </div>
       <p class="tiny">作者：颖哥 · MIT License · 刷机有风险，请先备份</p>
